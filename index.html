@@ -1,31 +1,11 @@
 <!DOCTYPE html>
-<!-- VERSION v1615 MULTI-CDN -->
+<!-- VERSION v1641 FETCH-DIRECT (no CDN library) -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ДомПлюс — ЖКХ платформа</title>
-<script>
-window.__sbReady=false;window.__sbFailed=false;
-(function(){
-  var cdns=[
-    'https://unpkg.com/@supabase/supabase-js@2',
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-    'https://cdn.skypack.dev/@supabase/supabase-js@2',
-    'https://esm.sh/@supabase/supabase-js@2'
-  ];
-  var i=0;
-  function tryNext(){
-    if(i>=cdns.length){window.__sbFailed=true;return;}
-    var s=document.createElement('script');
-    s.src=cdns[i++];
-    s.onload=function(){if(typeof supabase!=='undefined'&&supabase.createClient){window.__sbReady=true;}else{tryNext();}};
-    s.onerror=function(){tryNext();};
-    document.head.appendChild(s);
-  }
-  tryNext();
-})();
-</script>
+<!-- Прямое подключение к Supabase через fetch (без внешних библиотек) -->
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -314,6 +294,20 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 </style>
 </head>
 <body>
+<script>
+// Ловушка любых ошибок JS — покажет проблему на экране
+window.addEventListener('error',function(e){
+  var d=document.getElementById('globalErr');
+  if(!d){
+    d=document.createElement('div');
+    d.id='globalErr';
+    d.style.cssText='position:fixed;top:0;left:0;right:0;background:#f87171;color:#fff;padding:14px;z-index:99999;font-size:13px;font-family:sans-serif;line-height:1.5';
+    if(document.body)document.body.appendChild(d);
+  }
+  if(d)d.innerHTML='\u26a0\ufe0f \u041e\u0428\u0418\u0411\u041a\u0410 JS: '+e.message+'<br>\u0421\u0442\u0440\u043e\u043a\u0430: '+(e.lineno||'?')+' \u0432 '+((e.filename||'').split('/').pop()||'index.html');
+});
+window.__jsHeartbeat='HTML \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d';
+</script>
 
 <!-- AUTH -->
 <div class="ap" id="authPage">
@@ -341,7 +335,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
       </div>
       <div class="aerr" id="aerr"></div>
       <div id="diagBox" style="background:var(--sf2);border:1px solid var(--bd2);border-radius:9px;padding:12px;font-size:12px;margin-bottom:16px;line-height:1.6">
-        <div style="font-weight:600;margin-bottom:6px">🔍 Диагностика соединения:</div>
+        <div style="font-weight:600;margin-bottom:6px">🔍 Диагностика соединения: <span style="color:var(--gr);font-size:10px">FETCH-v2</span></div>
         <div id="diagLib">⏳ Проверка библиотеки...</div>
         <div id="diagClient">⏳ Проверка подключения...</div>
         <div id="diagConn">⏳ Проверка базы данных...</div>
@@ -692,28 +686,75 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 </div>
 
 <script>
-let sb=null;
+
 const SB_URL='https://cjowpleyqpsijvscxtpr.supabase.co';
 const SB_KEY='sb_publishable_R7WGic_B1KfF-4aVqfAp-w_pnNrXiwq';
-// Wait for the library (loaded via fallback CDNs) then create client
-function initSupabase(){
-  if(sb)return true;
-  if(typeof supabase!=='undefined'&&supabase.createClient){
-    try{sb=supabase.createClient(SB_URL,SB_KEY);return true;}
-    catch(e){console.error('Supabase init error:',e);return false;}
+let _session=null;
+
+// Сохранение/загрузка сессии
+function saveSession(){try{if(_session)localStorage.setItem('dp_session',JSON.stringify(_session));else localStorage.removeItem('dp_session');}catch(e){}}
+function loadSession(){try{const s=localStorage.getItem('dp_session');if(s)_session=JSON.parse(s);}catch(e){_session=null;}}
+
+// Запрос к базе (PostgREST) — имитирует chainable API supabase-js
+class Q{
+  constructor(table){this.t=table;this.f=[];this.cols='*';this.ord=null;this.lim=null;this.one=false;this.m='GET';this.body=null;this.up=false;}
+  select(c){this.cols=c||'*';return this;}
+  eq(c,v){this.f.push(c+'=eq.'+encodeURIComponent(v));return this;}
+  order(c,o){this.ord=c+'.'+((o&&o.ascending===false)?'desc':'asc');return this;}
+  limit(n){this.lim=n;return this;}
+  single(){this.one=true;return this;}
+  insert(d){this.m='POST';this.body=d;return this;}
+  update(d){this.m='PATCH';this.body=d;return this;}
+  upsert(d){this.m='POST';this.body=d;this.up=true;return this;}
+  then(res,rej){return this._run().then(res,rej);}
+  async _run(){
+    let url=SB_URL+'/rest/v1/'+this.t;
+    const p=this.f.slice();
+    if(this.m==='GET'){p.push('select='+this.cols);if(this.ord)p.push('order='+this.ord);if(this.lim)p.push('limit='+this.lim);}
+    if(p.length)url+='?'+p.join('&');
+    const h={'apikey':SB_KEY,'Content-Type':'application/json'};
+    if(_session&&_session.access_token)h['Authorization']='Bearer '+_session.access_token;
+    if(this.m==='POST'||this.m==='PATCH'){h['Prefer']=this.up?'resolution=merge-duplicates,return=representation':'return=representation';}
+    try{
+      const r=await fetch(url,{method:this.m,headers:h,body:this.body?JSON.stringify(this.body):undefined});
+      if(!r.ok){let e={};try{e=await r.json();}catch(_){}return {data:null,error:{message:e.message||e.hint||('HTTP '+r.status),status:r.status}};}
+      let d=[];try{d=await r.json();}catch(_){d=[];}
+      if(this.one)return {data:Array.isArray(d)?(d[0]||null):d,error:null};
+      return {data:d,error:null};
+    }catch(e){return {data:null,error:{message:e.message||'Нет связи с сервером'}};}
   }
-  return false;
 }
-// Poll until library ready (max 15 sec)
-async function waitForSupabase(maxMs){
-  const start=Date.now();
-  while(Date.now()-start<maxMs){
-    if(window.__sbReady&&initSupabase())return true;
-    if(window.__sbFailed)return false;
-    await new Promise(r=>setTimeout(r,200));
-  }
-  return initSupabase();
-}
+
+// Объект sb — полная замена supabase-js через fetch
+const sb={
+  auth:{
+    async signUp({email,password,options}){
+      try{
+        const r=await fetch(SB_URL+'/auth/v1/signup',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password,data:(options&&options.data)||{}})});
+        const d=await r.json();
+        if(!r.ok)return {data:{user:null},error:{message:d.msg||d.error_description||d.error||('Ошибка '+r.status)}};
+        if(d.access_token){_session={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user};saveSession();return {data:{user:d.user},error:null};}
+        // Если email-подтверждение включено — user есть, сессии нет
+        return {data:{user:d.user||d.id?d:null},error:null};
+      }catch(e){return {data:{user:null},error:{message:e.message||'Нет связи с сервером'}};}
+    },
+    async signInWithPassword({email,password}){
+      try{
+        const r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+        const d=await r.json();
+        if(!r.ok)return {data:{user:null},error:{message:d.error_description||d.msg||'Неверный email или пароль'}};
+        _session={access_token:d.access_token,refresh_token:d.refresh_token,user:d.user};saveSession();
+        return {data:{user:d.user},error:null};
+      }catch(e){return {data:{user:null},error:{message:e.message||'Нет связи с сервером'}};}
+    },
+    async getSession(){loadSession();return {data:{session:_session},error:null};},
+    async signOut(){
+      try{if(_session&&_session.access_token)await fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+_session.access_token}});}catch(e){}
+      _session=null;saveSession();return {error:null};
+    }
+  },
+  from(table){return new Q(table);}
+};
 
 let CU=null,UP=null,UA=null,UB=[],UPay=[],UM=[],UT=[],UN=[],CA=0,chatMode='uk';
 let savedPDFs=[];
@@ -812,8 +853,6 @@ function showErr(m){const e=document.getElementById('aerr');e.textContent=m;e.cl
 
 async function doLogin(){
   try{
-    if(!sb){await waitForSupabase(10000);}
-    if(!sb){showErr('Не удалось подключиться к базе. CDN заблокирован — попробуйте VPN или обновите страницу.');return;}
     const email=document.getElementById('lEmail').value.trim(),pass=document.getElementById('lPass').value;
     if(!email||!pass){showErr('Введите email и пароль');return;}
     const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Входим...';
@@ -830,8 +869,6 @@ async function doLogin(){
 
 async function doRegister(){
   try{
-    if(!sb){await waitForSupabase(10000);}
-    if(!sb){showErr('Не удалось подключиться к базе. CDN заблокирован — попробуйте VPN или обновите страницу.');return;}
     const name=document.getElementById('rName').value.trim(),email=document.getElementById('rEmail').value.trim();
     const phone=document.getElementById('rPhone').value.trim(),pass=document.getElementById('rPass').value;
     if(!name||!email||!pass){showErr('Заполните обязательные поля');return;}
@@ -1154,7 +1191,7 @@ function generatePDF(){
   doc.setFont('helvetica','normal');doc.setFontSize(10);
   let total=0;
   allItems.forEach(item=>{
-    const name=item.name.replace(/[^ -]/g,'?').substring(0,40);
+    const name=item.name.replace(/[^ -]/g,'?').substring(0,40);
     const amtStr=item.amount.toLocaleString('ru')+' rub';
     const status=item.status==='paid'?'Oplacheno':'Ne oplacheno';
     doc.text(name,20,y);doc.text(amtStr,140,y);doc.text(status,165,y);
@@ -1357,7 +1394,7 @@ function quickPDF(month){
   doc.setFont('helvetica','normal');doc.setFontSize(10);
   let total=0;
   pays.forEach(p=>{
-    const name=(p.bill_name||p.period).replace(/[^ -]/g,'?').substring(0,45);
+    const name=(p.bill_name||p.period).replace(/[^ -]/g,'?').substring(0,45);
     doc.text(name,20,y);doc.text(p.amount.toLocaleString('ru')+' rub',155,y);y+=8;total+=p.amount;
   });
   doc.line(20,y,190,y);y+=8;
@@ -1600,54 +1637,34 @@ async function runDiagnostics(){
   const dc=document.getElementById('diagClient');
   const dco=document.getElementById('diagConn');
   if(!dl)return;
-  // 1. Wait for library to load from one of the CDNs
-  dl.innerHTML='⏳ Загрузка библиотеки (проверяем источники)...';
-  const ok=await waitForSupabase(15000);
-  if(ok&&sb){
-    dl.innerHTML='✅ Библиотека загружена и клиент создан';
-  }else if(window.__sbFailed||typeof supabase==='undefined'){
-    dl.innerHTML='❌ Все CDN заблокированы. Нужен российский хостинг библиотеки.';
-    dc.innerHTML='❌ Подключение невозможно';
-    dco.innerHTML='❌ Решение: подключить Supabase через прокси или VPN';
-    return;
-  }else{
-    dl.innerHTML='❌ Клиент не создан (проверьте ключ)';
-    dc.innerHTML='❌';dco.innerHTML='❌';
-    return;
-  }
-  // 3. Connection test with timeout
+  dl.innerHTML='\u2705 \u041f\u0440\u044f\u043c\u043e\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 (\u0431\u0435\u0437 \u0432\u043d\u0435\u0448\u043d\u0438\u0445 \u0431\u0438\u0431\u043b\u0438\u043e\u0442\u0435\u043a)';
+  // 2. Test server reachability
+  dc.innerHTML='\u23f3 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0441\u0432\u044f\u0437\u0438 \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c...';
   try{
-    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('Таймаут — база не отвечает 8 сек')),8000));
-    const result=await Promise.race([sb.auth.getSession(),timeout]);
-    if(result.error){
-      dc.innerHTML='❌ Ошибка авторизации: '+result.error.message;
-    }else{
-      dc.innerHTML='✅ Соединение с базой работает';
-    }
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('\u0422\u0430\u0439\u043c\u0430\u0443\u0442 10 \u0441\u0435\u043a \u2014 \u0441\u0435\u0440\u0432\u0435\u0440 \u043d\u0435 \u043e\u0442\u0432\u0435\u0447\u0430\u0435\u0442')),10000));
+    const r=await Promise.race([fetch(SB_URL+'/auth/v1/settings',{headers:{'apikey':SB_KEY}}),timeout]);
+    if(r.ok||r.status===400||r.status===401){dc.innerHTML='\u2705 \u0421\u0435\u0440\u0432\u0435\u0440 Supabase \u043e\u0442\u0432\u0435\u0447\u0430\u0435\u0442';}
+    else{dc.innerHTML='\u26a0\ufe0f \u0421\u0435\u0440\u0432\u0435\u0440 \u043e\u0442\u0432\u0435\u0442\u0438\u043b: HTTP '+r.status;}
   }catch(e){
-    dc.innerHTML='❌ '+e.message;
-    dco.innerHTML='⚠️ Возможно проект Supabase на паузе. Зайдите в supabase.com и нажмите Restore.';
+    dc.innerHTML='\u274c '+e.message;
+    dco.innerHTML='\ud83d\udd27 \u0421\u0435\u0440\u0432\u0435\u0440 Supabase \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d \u0438\u0437 \u0420\u043e\u0441\u0441\u0438\u0438. \u041d\u0443\u0436\u0435\u043d \u043f\u0435\u0440\u0435\u0435\u0437\u0434 \u043d\u0430 \u042f\u043d\u0434\u0435\u043a\u0441/VK Cloud.';
     return;
   }
-  // 4. Test actual DB query with timeout
+  // 3. Test DB query
   try{
-    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('Таймаут запроса к базе')),8000));
-    const{error}=await Promise.race([sb.from('profiles').select('id').limit(1),timeout]);
-    if(error){
-      if(error.message.includes('JWT')||error.message.includes('key')||error.message.includes('API')){
-        dco.innerHTML='❌ Проблема с ключом API: '+error.message;
-      }else if(error.message.includes('relation')||error.message.includes('does not exist')){
-        dco.innerHTML='⚠️ Таблицы не созданы. Запустите SQL в Supabase.';
-      }else{
-        dco.innerHTML='⚠️ '+error.message;
-      }
-    }else{
-      dco.innerHTML='✅ База данных отвечает. Всё готово!';
-      // Hide diagnostic after success
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('\u0422\u0430\u0439\u043c\u0430\u0443\u0442 \u0437\u0430\u043f\u0440\u043e\u0441\u0430')),10000));
+    const r=await Promise.race([fetch(SB_URL+'/rest/v1/profiles?select=id&limit=1',{headers:{'apikey':SB_KEY}}),timeout]);
+    if(r.ok){
+      dco.innerHTML='\u2705 \u0411\u0430\u0437\u0430 \u0434\u0430\u043d\u043d\u044b\u0445 \u043e\u0442\u0432\u0435\u0447\u0430\u0435\u0442. \u0412\u0441\u0451 \u0433\u043e\u0442\u043e\u0432\u043e!';
       setTimeout(()=>{const db=document.getElementById('diagBox');if(db)db.style.display='none';},2500);
+    }else{
+      let e={};try{e=await r.json();}catch(_){}
+      if(r.status===401||r.status===403){dco.innerHTML='\u274c \u041f\u0440\u043e\u0431\u043b\u0435\u043c\u0430 \u0441 \u043a\u043b\u044e\u0447\u043e\u043c API (HTTP '+r.status+')';}
+      else if((e.message||'').includes('does not exist')||(e.message||'').includes('relation')){dco.innerHTML='\u26a0\ufe0f \u0422\u0430\u0431\u043b\u0438\u0446\u044b \u043d\u0435 \u0441\u043e\u0437\u0434\u0430\u043d\u044b. \u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u0435 SQL \u0432 Supabase.';}
+      else{dco.innerHTML='\u26a0\ufe0f '+(e.message||('HTTP '+r.status));}
     }
   }catch(e){
-    dco.innerHTML='❌ Ошибка запроса: '+e.message;
+    dco.innerHTML='\u274c '+e.message;
   }
 }
 
@@ -1656,20 +1673,22 @@ function startupSequence(){
   setTimeout(async function(){
     try{ await runDiagnostics(); }catch(e){
       const dl=document.getElementById('diagLib');
-      if(dl)dl.innerHTML='❌ Ошибка скрипта: '+e.message;
+      if(dl)dl.innerHTML='❌ Ошибка диагностики: '+e.message;
     }
     try{
-      if(!sb)return;
       const{data:{session}}=await sb.auth.getSession();
       if(session)await initApp(session.user);
     }catch(e){console.error('Startup error:',e);}
   },100);
 }
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',startupSequence);
-}else{
+// Запускаем сразу — скрипт в конце body, DOM уже готов
+try{
   startupSequence();
+}catch(e){
+  var d=document.getElementById('diagLib');
+  if(d)d.innerHTML='❌ Критическая ошибка: '+e.message;
 }
+
 </script>
 </body>
 </html>
