@@ -236,6 +236,14 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 .email-status.verified{background:var(--grd);color:var(--gr)}
 .email-status.unverified{background:var(--ord);color:var(--or)}
 
+
+.pay-methods{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.pay-opt{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--sf2);border:1.5px solid var(--bd2);border-radius:11px;cursor:pointer;transition:all .15s}
+.pay-opt:hover{border-color:var(--ac)}
+.pay-opt.sel{border-color:var(--ac);background:var(--acd)}
+.pay-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--mu2);flex-shrink:0;transition:all .15s}
+.pay-opt.sel .pay-radio{border-color:var(--ac);background:var(--ac);box-shadow:inset 0 0 0 3px var(--sf2)}
+
 /* ═══ МОБИЛЬНАЯ АДАПТАЦИЯ ═══ */
 @media (max-width:900px){
   /* AUTH на телефоне */
@@ -395,7 +403,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
       <div class="bft"><span style="font-size:13px;color:var(--mu)">К оплате: <strong id="hTotal">0 ₽</strong></span><button class="btn bp bsm" onclick="payAll()">Оплатить всё</button></div>
     </div>
     <div class="card">
-      <div class="ch"><span class="ct">Расходы по месяцам</span><span class="ca" id="chartHint">нажмите на столбик</span></div>
+      <div class="ch"><span class="ct">Расходы по месяцам</span></div>
       <div style="padding:14px 18px">
         <div class="cb" id="hChart"></div>
         <div style="font-size:11px;color:var(--mu);text-align:center;margin-bottom:10px" id="chartLabel">Все месяцы</div>
@@ -497,13 +505,6 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 <!-- DOCS -->
 <div id="page-docs" class="page">
   <div class="topbar"><div><div class="pt">Документы</div><div class="ps">Договоры и архив квитанций</div></div></div>
-  <div style="margin-bottom:22px"><div style="font-size:14px;font-weight:600;margin-bottom:12px">📋 Договоры</div>
-    <div class="dg">
-      <div class="dc"><div class="di">📃</div><div class="dn">Договор управления МКД</div><div class="dm">PDF · 2.4 МБ · янв 2024</div></div>
-      <div class="dc"><div class="di">📃</div><div class="dn">Договор на водоснабжение</div><div class="dm">PDF · 1.1 МБ · мар 2024</div></div>
-      <div class="dc"><div class="di">📃</div><div class="dn">Договор электроснабжения</div><div class="dm">PDF · 980 КБ · мар 2024</div></div>
-    </div>
-  </div>
   <div><div style="font-size:14px;font-weight:600;margin-bottom:12px">🧾 Архив квитанций (PDF)</div>
     <div class="card">
       <div class="ch"><span class="ct">Сохранённые квитанции</span><span class="ca" onclick="showPDFModal()">+ Создать PDF</span></div>
@@ -607,9 +608,12 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
       </div>
       <!-- PAYMENT -->
       <div class="sp" id="sp-pay">
-        <div class="ss"><div class="sst">Способы оплаты</div>
-          <div class="sr"><div style="display:flex;align-items:center;gap:12px"><div style="font-size:24px">💳</div><div><div class="srl">Visa •••• 4218</div><div class="srd">Основной · Истекает 09/27</div></div></div><div class="tag paid">Основная</div></div>
-          <div style="padding:14px 22px"><button class="btn bg2 bsm">+ Добавить карту</button></div>
+        <div class="ss"><div class="sst">Привязанные карты</div>
+          <div id="cardsList"></div>
+          <div style="padding:14px 22px"><button class="btn bp bsm" onclick="showAddCard()">+ Привязать карту</button></div>
+        </div>
+        <div class="ss"><div class="sst">Система быстрых платежей (СБП)</div>
+          <div class="sr"><div style="display:flex;align-items:center;gap:12px"><div style="font-size:24px">⚡</div><div><div class="srl">Оплата по СБП</div><div class="srd">Через приложение вашего банка по QR-коду</div></div></div><div class="tag paid">Доступно</div></div>
         </div>
         <div class="ss"><div class="sst">Автооплата</div>
           <div class="sr"><div><div class="srl">Автоматически оплачивать</div><div class="srd">За 3 дня до срока</div></div><label class="tog"><input type="checkbox"><span class="togs"></span></label></div>
@@ -649,6 +653,27 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 <!-- MODALS -->
 <div class="ov" id="payOv" onclick="if(event.target.id==='payOv')document.getElementById('payOv').classList.remove('open')"><div class="modal"><div id="payC"></div></div></div>
 <div class="ov" id="prvOv" onclick="if(event.target.id==='prvOv')document.getElementById('prvOv').classList.remove('open')"><div class="modal" style="width:480px"><div id="prvC"></div></div></div>
+<!-- ADD CARD MODAL -->
+<div class="ov" id="cardOv" onclick="if(event.target.id==='cardOv')document.getElementById('cardOv').classList.remove('open')">
+  <div class="modal" style="width:420px">
+    <h3>💳 Привязать карту</h3>
+    <div class="msub">Данные карты защищены и хранятся в зашифрованном виде</div>
+    <div class="inpg"><label class="inpl">Номер карты</label><input class="inp" id="cardNum" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNum(this)"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="inpg"><label class="inpl">Срок (ММ/ГГ)</label><input class="inp" id="cardExp" placeholder="09/27" maxlength="5" oninput="formatCardExp(this)"></div>
+      <div class="inpg"><label class="inpl">CVC</label><input class="inp" id="cardCvc" placeholder="•••" maxlength="3" type="password"></div>
+    </div>
+    <div class="inpg"><label class="inpl">Имя владельца</label><input class="inp" id="cardName" placeholder="IVAN IVANOV"></div>
+    <div class="mact">
+      <button class="btn bg2" onclick="document.getElementById('cardOv').classList.remove('open')">Отмена</button>
+      <button class="btn bp" onclick="saveCard()">Привязать</button>
+    </div>
+  </div>
+</div>
+<!-- PAYMENT METHOD MODAL -->
+<div class="ov" id="payMethodOv" onclick="if(event.target.id==='payMethodOv')document.getElementById('payMethodOv').classList.remove('open')">
+  <div class="modal" style="width:440px"><div id="payMethodC"></div></div>
+</div>
 <!-- PDF MODAL -->
 <div class="ov" id="pdfOv" onclick="if(event.target.id==='pdfOv')document.getElementById('pdfOv').classList.remove('open')">
   <div class="modal" style="width:460px">
@@ -937,7 +962,7 @@ async function initApp(user){
   await loadAll();
 }
 async function loadAll(){
-  await Promise.all([lPr(),lBills(),lPay(),lMet(),lTick(),lNot()]);
+  await Promise.all([lPr(),lBills(),lPay(),lMet(),lTick(),lNot(),lCards()]);
   renderHome();renderSidebar();
 }
 async function lPr(){
@@ -1044,7 +1069,7 @@ function drawChart(filterMonth){
         </div></div>`;
     }else{cp.innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:var(--mu)">Нет платежей за этот месяц</div>';}
   }else{
-    document.getElementById('chartLabel').textContent='Нажмите на столбик для деталей';
+    document.getElementById('chartLabel').textContent='';
     cp.innerHTML='';
   }
 }
@@ -1070,21 +1095,10 @@ function bFilter(el,f){
 // ── PAYMENT ──
 async function openPay(id){
   const b=UB.find(x=>x.id===id);if(!b||b.status==='paid')return;
-  document.getElementById('payC').innerHTML=`
-    <div style="font-size:40px;margin-bottom:10px">${b.icon}</div>
-    <h3>${b.name}</h3><div class="msub">${b.org||''}</div>
-    <div class="mamt">${fmt(b.amount)}</div>
-    <div class="mdet"><span class="l">Период</span><span>${b.period||''}</span></div>
-    <div class="mdet"><span class="l">Способ оплаты</span><span>Visa •••• 4218</span></div>
-    <div class="mdet"><span class="l">Комиссия</span><span style="color:var(--gr)">0 ₽</span></div>
-    <div class="divl" style="margin:14px 0"></div>
-    <div class="mdet" style="font-weight:700"><span>Итого</span><span>${fmt(b.amount)}</span></div>
-    <div class="mact"><button class="btn bg2" onclick="document.getElementById('payOv').classList.remove('open')">Отмена</button>
-    <button class="btn bp" onclick="confirmPay('${id}')">💳 Оплатить</button></div>`;
-  document.getElementById('payOv').classList.add('open');
+  startPayment({type:'single',billId:id,amount:b.amount,name:b.name});
 }
 
-async function confirmPay(id){
+async function doConfirmSingle(id){
   const b=UB.find(x=>x.id===id);
   await sb.from('bills').update({status:'paid',paid_at:new Date().toISOString()}).eq('id',id);
   await sb.from('payments').insert({user_id:CU.id,bill_id:id,bill_name:b.name+' — '+b.period,amount:b.amount,icon:b.icon,period:b.period,method:'card',card_last4:'4218'});
@@ -1100,20 +1114,11 @@ async function confirmPay(id){
 async function payAll(){
   const u=UB.filter(b=>b.status==='unpaid');
   if(!u.length){alert('Все квитанции уже оплачены!');return;}
-  const tot=u.reduce((s,b)=>s+b.amount,0);
-  document.getElementById('payC').innerHTML=`
-    <div style="font-size:40px;margin-bottom:10px">💳</div>
-    <h3>Оплатить все квитанции</h3><div class="msub">${u.length} услуги · текущий месяц</div>
-    <div class="mamt">${fmt(tot)}</div>
-    ${u.map(b=>`<div class="mdet"><span class="l">${b.icon} ${b.name}</span><span>${fmt(b.amount)}</span></div>`).join('')}
-    <div class="divl" style="margin:14px 0"></div>
-    <div class="mdet" style="font-weight:700"><span>Итого</span><span>${fmt(tot)}</span></div>
-    <div class="mact"><button class="btn bg2" onclick="document.getElementById('payOv').classList.remove('open')">Отмена</button>
-    <button class="btn bp" onclick="confirmAll()">💳 Оплатить всё</button></div>`;
-  document.getElementById('payOv').classList.add('open');
+  const total=u.reduce((s,b)=>s+b.amount,0);
+  startPayment({type:'all',amount:total,name:'всех квитанций ('+u.length+')'});
 }
 
-async function confirmAll(){
+async function doConfirmAll(){
   const u=UB.filter(b=>b.status==='unpaid');
   const tot=u.reduce((s,b)=>s+b.amount,0);
   for(const b of u){
@@ -1147,51 +1152,107 @@ function toggleAllPDF(cb){
   document.querySelectorAll('.pdf-svc').forEach(c=>c.checked=cb.checked);
 }
 
+function buildReceiptHTML(month,items,total,allPaid){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
+  const acc=UA?UA.personal_account||'—':'—';
+  const apt=UA?('кв. '+UA.apartment_number+', '+UA.address+', '+(UA.city||'')):'—';
+  const uk=UA?UA.uk_name||'—':'—';
+  const fio=UP?UP.full_name||'—':'—';
+  const rows=items.map(it=>(
+    '<tr>'+
+    '<td style="padding:11px 14px;border-bottom:1px solid #eee;font-size:14px">'+it.icon+' '+it.name+'</td>'+
+    '<td style="padding:11px 14px;border-bottom:1px solid #eee;text-align:right;font-size:14px;font-weight:600">'+Number(it.amount).toLocaleString('ru')+' \u20bd</td>'+
+    '<td style="padding:11px 14px;border-bottom:1px solid #eee;text-align:center"><span style="font-size:12px;color:'+(it.status==='paid'?'#16a34a':'#dc2626')+';font-weight:600">'+(it.status==='paid'?'Оплачено':'Не оплачено')+'</span></td>'+
+    '</tr>'
+  )).join('');
+  // Печать (показываем только если всё оплачено)
+  const stamp=allPaid?(
+    '<div style="position:absolute;right:48px;bottom:90px;width:150px;height:150px;transform:rotate(-14deg)">'+
+      '<div style="position:relative;width:150px;height:150px;border:3px solid #2563eb;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:.85">'+
+        '<div style="position:absolute;width:128px;height:128px;border:1.5px solid #2563eb;border-radius:50%"></div>'+
+        '<div style="text-align:center;color:#2563eb;font-family:Arial,sans-serif">'+
+          '<div style="font-size:13px;font-weight:700;letter-spacing:.5px">ДОМПЛЮС</div>'+
+          '<div style="font-size:30px;line-height:1">✓</div>'+
+          '<div style="font-size:15px;font-weight:700;letter-spacing:1px">ОПЛАЧЕНО</div>'+
+          '<div style="font-size:9px;margin-top:2px">'+dateStr+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'
+  ):'';
+
+  return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Квитанция '+month+'</title>'+
+    '<style>'+
+    '@page{size:A4;margin:0}'+
+    '*{margin:0;padding:0;box-sizing:border-box}'+
+    'body{font-family:Arial,Helvetica,sans-serif;color:#1a2035;background:#fff;padding:48px 44px;position:relative}'+
+    '.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #2563eb;padding-bottom:20px;margin-bottom:24px}'+
+    '.logo{display:flex;align-items:center;gap:12px}'+
+    '.logo-ico{width:52px;height:52px;background:linear-gradient(135deg,#4f8ef7,#34d399);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px}'+
+    '.brand{font-size:26px;font-weight:700;color:#1a2035}'+
+    '.brand-sub{font-size:11px;color:#7a8aaa;letter-spacing:1.5px;text-transform:uppercase}'+
+    '.doc-title{text-align:right}'+
+    '.doc-title .t{font-size:18px;font-weight:700}'+
+    '.doc-title .p{font-size:13px;color:#7a8aaa;margin-top:3px}'+
+    '.info{background:#f5f7fb;border-radius:12px;padding:18px 20px;margin-bottom:24px;font-size:13px;line-height:1.9}'+
+    '.info b{color:#1a2035}.info span{color:#5a6580}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:8px}'+
+    'th{text-align:left;padding:10px 14px;background:#2563eb;color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.5px}'+
+    'th:nth-child(2){text-align:right}th:nth-child(3){text-align:center}'+
+    '.total{display:flex;justify-content:space-between;align-items:center;background:#eff4ff;border-radius:12px;padding:16px 20px;margin-top:14px}'+
+    '.total .l{font-size:15px;font-weight:600;color:#1a2035}'+
+    '.total .v{font-size:24px;font-weight:700;color:#2563eb}'+
+    '.foot{margin-top:36px;padding-top:18px;border-top:1px solid #eee;font-size:11px;color:#9aa5bb;line-height:1.7}'+
+    '.print-btn{position:fixed;top:20px;right:20px;background:#2563eb;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.3)}'+
+    '@media print{.print-btn{display:none}body{padding:32px}}'+
+    '</style></head><body>'+
+    '<button class="print-btn" onclick="window.print()">🖨️ Сохранить как PDF / Печать</button>'+
+    '<div class="head">'+
+      '<div class="logo"><div class="logo-ico">🏠</div><div><div class="brand">ДомПлюс</div><div class="brand-sub">ЖКХ Платформа</div></div></div>'+
+      '<div class="doc-title"><div class="t">Квитанция</div><div class="p">'+month+'</div></div>'+
+    '</div>'+
+    '<div class="info">'+
+      '<div><span>Плательщик:</span> <b>'+fio+'</b></div>'+
+      '<div><span>Адрес:</span> <b>'+apt+'</b></div>'+
+      '<div><span>Лицевой счёт:</span> <b>'+acc+'</b></div>'+
+      '<div><span>Управляющая компания:</span> <b>'+uk+'</b></div>'+
+    '</div>'+
+    '<table><thead><tr><th>Услуга</th><th>Сумма</th><th>Статус</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="total"><span class="l">ИТОГО</span><span class="v">'+Number(total).toLocaleString('ru')+' \u20bd</span></div>'+
+    stamp+
+    '<div class="foot">Документ сформирован автоматически в системе ДомПлюс '+dateStr+'.<br>Квитанция носит информационный характер. По вопросам начислений обращайтесь в вашу управляющую компанию.</div>'+
+    '</body></html>';
+}
+
+function openReceiptWindow(month,items,total){
+  const allPaid=items.every(it=>it.status==='paid');
+  const html=buildReceiptHTML(month,items,total,allPaid);
+  const w=window.open('','_blank');
+  if(w){
+    w.document.write(html);
+    w.document.close();
+  }else{
+    // Попап заблокирован — открываем через data URL
+    const blob=new Blob([html],{type:'text/html'});
+    const url=URL.createObjectURL(blob);
+    location.href=url;
+  }
+}
+
 function generatePDF(){
   const month=document.getElementById('pdfMonth').value;
   const selected=[...document.querySelectorAll('.pdf-svc:checked')].map(c=>c.value);
   if(!selected.length){alert('Выберите хотя бы одну услугу');return;}
   const bills=UB.filter(b=>b.period===month&&selected.includes(b.name));
-  const pays=UPay.filter(p=>p.period===month&&selected.includes(p.bill_name?.split(' — ')[0]));
-  const allItems=[...bills.map(b=>{return{name:b.name,amount:b.amount,icon:b.icon,status:b.status};}),...pays.filter(p=>!bills.find(b=>b.name===p.bill_name?.split(' — ')[0])).map(p=>{return{name:p.bill_name,amount:p.amount,icon:p.icon,status:'paid'};})];
+  const pays=UPay.filter(p=>p.period===month&&selected.includes((p.bill_name||'').split(' — ')[0]));
+  const allItems=[...bills.map(b=>({name:b.name,amount:b.amount,icon:b.icon,status:b.status})),...pays.filter(p=>!bills.find(b=>b.name===(p.bill_name||'').split(' — ')[0])).map(p=>({name:(p.bill_name||'').split(' — ')[0],amount:p.amount,icon:p.icon,status:'paid'}))];
   if(!allItems.length){alert('Нет данных за выбранный период');return;}
-  const{jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  // Header
-  doc.setFont('helvetica','bold');doc.setFontSize(20);
-  doc.text('DomPlus - ZhKH',20,20);
-  doc.setFontSize(14);doc.setFont('helvetica','normal');
-  doc.text('Kvitantsiya za: '+month,20,32);
-  if(UA){doc.setFontSize(11);doc.text('Kv. '+UA.apartment_number+', '+UA.address,20,42);doc.text('L/S: '+(UA.personal_account||'—'),20,50);}
-  doc.setFontSize(11);doc.text('UK: '+(UA?.uk_name||'—'),20,58);
-  // Line
-  doc.setDrawColor(200,200,200);doc.line(20,64,190,64);
-  // Items
-  let y=74;
-  doc.setFont('helvetica','bold');doc.setFontSize(11);
-  doc.text('Usluga',20,y);doc.text('Summa',140,y);doc.text('Status',165,y);y+=8;
-  doc.setFont('helvetica','normal');doc.setFontSize(10);
-  let total=0;
-  allItems.forEach(item=>{
-    const name=item.name.replace(/[^ -]/g,'?').substring(0,40);
-    const amtStr=item.amount.toLocaleString('ru')+' rub';
-    const status=item.status==='paid'?'Oplacheno':'Ne oplacheno';
-    doc.text(name,20,y);doc.text(amtStr,140,y);doc.text(status,165,y);
-    y+=8;total+=item.amount;
-  });
-  doc.line(20,y,190,y);y+=8;
-  doc.setFont('helvetica','bold');doc.setFontSize(12);
-  doc.text('ITOGO: '+total.toLocaleString('ru')+' rub',20,y);
-  y+=12;doc.setFont('helvetica','normal');doc.setFontSize(9);
-  doc.text('Sozdan: '+new Date().toLocaleDateString('ru'),20,y);
-  // Save
-  const filename=`DomPlus_${month.replace(' ','_')}.pdf`;
-  doc.save(filename);
-  // Save to local archive
-  const entry={id:Date.now(),month,filename,created:new Date().toISOString(),items:allItems,total};
-  savedPDFs.unshift(entry);
+  const total=allItems.reduce((s,it)=>s+it.amount,0);
+  openReceiptWindow(month,allItems,total);
+  const entry={id:Date.now(),month,created:new Date().toISOString(),items:allItems,total};
+  if(!savedPDFs.find(p=>p.month===month))savedPDFs.unshift(entry);
   document.getElementById('pdfOv').classList.remove('open');
-  toast('📄','PDF сохранён: '+filename);
+  toast('📄','Квитанция за '+month+' готова');
   renderArchive();
 }
 
@@ -1361,31 +1422,13 @@ function renderArchive(){
 }
 
 function quickPDF(month){
-  // Set month in PDF modal and generate directly
   const pays=UPay.filter(p=>p.period===month);
   if(!pays.length)return;
-  const{jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('DomPlus - Kvitantsiya',20,20);
-  doc.setFontSize(13);doc.setFont('helvetica','normal');doc.text('Period: '+month,20,32);
-  if(UA){doc.text('Kv. '+UA.apartment_number+', '+UA.address,20,42);doc.text('L/S: '+(UA.personal_account||'—'),20,50);}
-  doc.text('UK: '+(UA?.uk_name||'—'),20,58);
-  doc.setDrawColor(200,200,200);doc.line(20,64,190,64);
-  let y=74;
-  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Usluga',20,y);doc.text('Summa',155,y);y+=8;
-  doc.setFont('helvetica','normal');doc.setFontSize(10);
-  let total=0;
-  pays.forEach(p=>{
-    const name=(p.bill_name||p.period).replace(/[^ -]/g,'?').substring(0,45);
-    doc.text(name,20,y);doc.text(p.amount.toLocaleString('ru')+' rub',155,y);y+=8;total+=p.amount;
-  });
-  doc.line(20,y,190,y);y+=8;
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('ITOGO: '+total.toLocaleString('ru')+' rub',20,y);
-  const filename=`DomPlus_${month.replace(' ','_')}.pdf`;
-  doc.save(filename);
-  const entry={id:Date.now(),month,filename,created:new Date().toISOString(),items:pays,total};
-  savedPDFs.unshift(entry);
-  toast('📄','PDF скачан: '+filename);
+  const items=pays.map(p=>({name:(p.bill_name||'').split(' — ')[0]||p.bill_name,amount:p.amount,icon:p.icon||'💳',status:'paid'}));
+  const total=items.reduce((s,it)=>s+it.amount,0);
+  openReceiptWindow(month,items,total);
+  if(!savedPDFs.find(p=>p.month===month))savedPDFs.unshift({id:Date.now(),month,created:new Date().toISOString(),items,total});
+  toast('📄','Квитанция за '+month+' готова');
   renderArchive();
 }
 
@@ -1566,9 +1609,190 @@ function updateUKInfo(){
   ul.innerHTML=uks.map((x,i)=>`
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:${i<uks.length-1?'1px solid var(--bd)':'none'}">
       <div><div style="font-size:13.5px;font-weight:500">🏢 ${x}</div><div style="font-size:11.5px;color:var(--mu);margin-top:2px">Управляющая компания</div></div>
-      <button class="btn bg2 bsm" onclick="window.open('https://dom.gosuslugi.ru/#!/search?term=${encodeURIComponent(x)}','_blank')">🌐 ГИС ЖКХ</button>
+      <button class="btn bg2 bsm" onclick="openGIS('${x.replace(/'/g,String.fromCharCode(92,39))}')">🌐 ГИС ЖКХ</button>
     </div>`).join('');
 }
+
+// Открыть ГИС ЖКХ для поиска УК
+function openGIS(name){
+  const url='https://dom.gosuslugi.ru/#!/houses';
+  try{
+    const w=window.open(url,'_blank');
+    if(!w||w.closed||typeof w.closed==='undefined'){
+      // Если попап заблокирован — переходим в этой вкладке
+      location.href=url;
+    }
+  }catch(e){
+    location.href=url;
+  }
+}
+
+// ═══ КАРТЫ И ОПЛАТА ═══
+let UCards=[];
+
+async function lCards(){
+  const{data}=await sb.from('cards').select('*').eq('user_id',CU.id).order('created_at',{ascending:false});
+  UCards=data||[];
+}
+
+function detectBrand(num){
+  const n=num.replace(/\s/g,'');
+  if(/^4/.test(n))return'Visa';
+  if(/^220[0-4]/.test(n))return'МИР';
+  if(/^5[1-5]/.test(n)||/^2[2-7]/.test(n))return'Mastercard';
+  return'Карта';
+}
+function brandIcon(b){return b==='Visa'?'💳':b==='Mastercard'?'💳':b==='МИР'?'🟢':'💳';}
+
+function formatCardNum(el){
+  let v=el.value.replace(/\D/g,'').slice(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatCardExp(el){
+  let v=el.value.replace(/\D/g,'').slice(0,4);
+  if(v.length>=3)v=v.slice(0,2)+'/'+v.slice(2);
+  el.value=v;
+}
+
+function showAddCard(){
+  ['cardNum','cardExp','cardCvc','cardName'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('cardOv').classList.add('open');
+}
+
+async function saveCard(){
+  const num=document.getElementById('cardNum').value.replace(/\s/g,'');
+  const exp=document.getElementById('cardExp').value;
+  const cvc=document.getElementById('cardCvc').value;
+  const holder=document.getElementById('cardName').value.trim();
+  if(num.length<16){alert('Введите полный номер карты');return;}
+  if(exp.length<5){alert('Введите срок действия');return;}
+  if(cvc.length<3){alert('Введите CVC');return;}
+  const brand=detectBrand(num);
+  const last4=num.slice(-4);
+  const isFirst=UCards.length===0;
+  await sb.from('cards').insert({user_id:CU.id,last4,brand,exp,holder:holder||'—',is_default:isFirst});
+  await lCards();renderCards();
+  document.getElementById('cardOv').classList.remove('open');
+  toast('✅','Карта '+brand+' •••• '+last4+' привязана');
+}
+
+async function deleteCard(id){
+  if(!confirm('Отвязать эту карту?'))return;
+  await sb.from('cards').delete().eq('id',id);
+  await lCards();renderCards();
+  toast('🗑️','Карта отвязана');
+}
+
+async function makeDefaultCard(id){
+  for(const c of UCards){await sb.from('cards').update({is_default:c.id===id}).eq('id',c.id);}
+  await lCards();renderCards();
+  toast('✅','Основная карта изменена');
+}
+
+function renderCards(){
+  const el=document.getElementById('cardsList');
+  if(!el)return;
+  if(!UCards.length){
+    el.innerHTML='<div style="padding:18px 22px;font-size:13px;color:var(--mu)">Нет привязанных карт. Добавьте карту для оплаты.</div>';
+    return;
+  }
+  el.innerHTML=UCards.map(c=>(
+    '<div class="sr">'+
+      '<div style="display:flex;align-items:center;gap:12px"><div style="font-size:24px">'+brandIcon(c.brand)+'</div>'+
+      '<div><div class="srl">'+c.brand+' •••• '+c.last4+'</div><div class="srd">'+(c.holder||'—')+' · до '+(c.exp||'—')+'</div></div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        (c.is_default?'<div class="tag paid">Основная</div>':'<button class="btn bg2 bsm" onclick="makeDefaultCard(\''+c.id+'\')">Сделать основной</button>')+
+        '<button class="btn brd bsm" onclick="deleteCard(\''+c.id+'\')">Отвязать</button>'+
+      '</div>'+
+    '</div>'
+  )).join('');
+}
+
+// ═══ ОПЛАТА (выбор способа) ═══
+let _payCtx=null; // {type:'single'|'all', billId, amount, name, bills}
+
+function startPayment(ctx){
+  _payCtx=ctx;
+  const defCard=UCards.find(c=>c.is_default)||UCards[0];
+  const cardOptions=UCards.length?UCards.map(c=>(
+    '<div class="pay-opt" onclick="selectPayMethod(this,\'card:'+c.id+'\')">'+
+      '<div style="font-size:22px">'+brandIcon(c.brand)+'</div>'+
+      '<div style="flex:1"><div style="font-size:13.5px;font-weight:600">'+c.brand+' •••• '+c.last4+'</div><div style="font-size:11px;color:var(--mu)">'+(c.holder||'')+'</div></div>'+
+      '<div class="pay-radio"></div>'+
+    '</div>'
+  )).join(''):'<div style="font-size:12.5px;color:var(--mu);padding:8px 0">Нет привязанных карт</div>';
+
+  document.getElementById('payMethodC').innerHTML=
+    '<h3>Оплата '+ctx.name+'</h3>'+
+    '<div class="mamt" style="margin:12px 0 20px">'+fmt(ctx.amount)+'</div>'+
+    '<div style="font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Способ оплаты</div>'+
+    '<div class="pay-methods">'+
+      cardOptions+
+      '<div class="pay-opt" onclick="selectPayMethod(this,\'sbp\')">'+
+        '<div style="font-size:22px">⚡</div>'+
+        '<div style="flex:1"><div style="font-size:13.5px;font-weight:600">СБП (Система быстрых платежей)</div><div style="font-size:11px;color:var(--mu)">Оплата по QR через банк</div></div>'+
+        '<div class="pay-radio"></div>'+
+      '</div>'+
+      '<div class="pay-opt" onclick="selectPayMethod(this,\'newcard\')">'+
+        '<div style="font-size:22px">➕</div>'+
+        '<div style="flex:1"><div style="font-size:13.5px;font-weight:600">Новая карта</div><div style="font-size:11px;color:var(--mu)">Оплатить другой картой</div></div>'+
+        '<div class="pay-radio"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div id="payExtra"></div>'+
+    '<div class="mact">'+
+      '<button class="btn bg2" onclick="document.getElementById(\'payMethodOv\').classList.remove(\'open\')">Отмена</button>'+
+      '<button class="btn bp" id="payConfirmBtn" onclick="processPayment()" disabled style="opacity:.5">Оплатить</button>'+
+    '</div>';
+  // auto-select default card
+  _selectedMethod=null;
+  document.getElementById('payMethodOv').classList.add('open');
+}
+
+let _selectedMethod=null;
+function selectPayMethod(el,method){
+  document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  _selectedMethod=method;
+  const btn=document.getElementById('payConfirmBtn');
+  btn.disabled=false;btn.style.opacity='1';
+  const extra=document.getElementById('payExtra');
+  if(method==='sbp'){
+    extra.innerHTML='<div style="text-align:center;padding:18px 0"><div style="width:160px;height:160px;margin:0 auto;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd2)"><div style="font-size:13px;color:#333;text-align:center;line-height:1.5">📱<br>QR-код СБП<br><span style="font-size:10px;color:#888">отсканируйте<br>в приложении банка</span></div></div><div style="font-size:11px;color:var(--mu);margin-top:10px">Откройте приложение банка и отсканируйте QR</div></div>';
+    btn.textContent='Я оплатил по СБП';
+  }else if(method==='newcard'){
+    extra.innerHTML='<div style="margin-top:14px"><div class="inpg"><label class="inpl">Номер карты</label><input class="inp" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNum(this)"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="inpg" style="margin:0"><label class="inpl">ММ/ГГ</label><input class="inp" id="payCardExp" placeholder="09/27" maxlength="5" oninput="formatCardExp(this)"></div><div class="inpg" style="margin:0"><label class="inpl">CVC</label><input class="inp" id="payCardCvc" type="password" placeholder="•••" maxlength="3"></div></div></div>';
+    btn.textContent='💳 Оплатить';
+  }else{
+    extra.innerHTML='';
+    btn.textContent='💳 Оплатить '+fmt(_payCtx.amount);
+  }
+}
+
+async function processPayment(){
+  if(!_selectedMethod){alert('Выберите способ оплаты');return;}
+  if(_selectedMethod==='newcard'){
+    const num=(document.getElementById('payCardNum')||{}).value||'';
+    if(num.replace(/\s/g,'').length<16){alert('Введите номер карты');return;}
+  }
+  const btn=document.getElementById('payConfirmBtn');
+  btn.disabled=true;btn.textContent='Обработка...';
+
+  // ═══════════════════════════════════════════════════
+  // ТОЧКА ПОДКЛЮЧЕНИЯ РЕАЛЬНОЙ ОПЛАТЫ (ЮKassa и т.п.)
+  // Когда будет ИП/ООО — здесь вызывается реальный платёжный API.
+  // Сейчас — имитация успешной оплаты через 1.2 сек.
+  // ═══════════════════════════════════════════════════
+  await new Promise(r=>setTimeout(r,1200));
+
+  document.getElementById('payMethodOv').classList.remove('open');
+  if(_payCtx.type==='single'){
+    await doConfirmSingle(_payCtx.billId);
+  }else{
+    await doConfirmAll();
+  }
+}
+
 
 // ── NAVIGATION ──
 function goto(page,el){
@@ -1585,7 +1809,7 @@ function goto(page,el){
   if(page==='tickets')renderTickets('all');
   if(page==='docs')renderArchive();
   if(page==='chat'){switchChat('uk',document.querySelector('.cth'));}
-  if(page==='settings'){updateCities();const se=document.getElementById('secEmail');if(se)se.textContent=CU?.email||'—';}
+  if(page==='settings'){updateCities();renderCards();const se=document.getElementById('secEmail');if(se)se.textContent=CU?.email||'—';}
   closeSidebar();
 }
 
