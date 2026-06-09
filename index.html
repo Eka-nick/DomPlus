@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v2002 pay+pdf fixes -->
+<!-- VERSION v2025 FINAL mobile+stamp -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -245,60 +245,113 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 .pay-opt.sel .pay-radio{border-color:var(--ac);background:var(--ac);box-shadow:inset 0 0 0 3px var(--sf2)}
 
 /* ═══ МОБИЛЬНАЯ АДАПТАЦИЯ ═══ */
+/* Бургер скрыт на десктопе */
+.burger{display:none}
+.mtopbar{display:none}
+
 @media (max-width:900px){
-  /* AUTH на телефоне */
+  /* ── Верхняя панель с бургером (фиксированная) ── */
+  .mtopbar{display:flex;position:fixed;top:0;left:0;right:0;height:54px;background:var(--sf);border-bottom:1px solid var(--bd);z-index:280;align-items:center;gap:12px;padding:0 14px}
+  .burger{display:flex;width:40px;height:40px;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;align-items:center;justify-content:center;font-size:20px;cursor:pointer;color:var(--tx);flex-shrink:0}
+  .mtopbar-logo{display:flex;align-items:center;gap:8px;font-family:'Playfair Display',serif;font-weight:700;font-size:17px}
+  .mtopbar-logo .mli{width:28px;height:28px;background:linear-gradient(135deg,var(--ac),var(--gr));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .mtopbar-spacer{flex:1}
+
+  /* ── AUTH на телефоне ── */
   .ap{flex-direction:column}
   .al{display:none}
-  .ar{width:100%;padding:24px 18px;min-height:100vh}
+  .ar{width:100%;padding:32px 20px;min-height:100vh}
   .abox{max-width:100%}
-  .atitle{font-size:24px}
-  /* APP layout */
+  .atitle{font-size:23px}
+
+  /* ── Layout приложения ── */
   .appg{flex-direction:column}
-  .sb{position:fixed;left:-260px;width:240px;transition:left .3s ease;z-index:300;box-shadow:4px 0 24px rgba(0,0,0,.3)}
+  .sb{position:fixed;left:-280px;top:0;bottom:0;width:264px;transition:left .28s ease;z-index:300;box-shadow:4px 0 30px rgba(0,0,0,.4)}
   .sb.open{left:0}
-  .main{margin-left:0;width:100%}
-  .page{padding:18px 14px;padding-top:64px}
-  /* Burger menu button */
-  .burger{display:flex!important}
-  /* Overlay when sidebar open */
-  .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:299}
+  .main{margin-left:0;width:100%;max-width:100%;overflow-x:hidden}
+  .page{padding:16px 14px;padding-top:70px}
+  .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:299}
   .sb-backdrop.open{display:block}
-  /* Stats grid stacks */
-  .sg{grid-template-columns:1fr!important;gap:10px}
-  /* Home main grid stacks */
-  #page-home>div[style*="grid-template-columns:1fr 310px"]{grid-template-columns:1fr!important}
-  /* Meters grid */
+
+  /* ── Заголовки страниц ── */
+  .topbar{flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .pt{font-size:21px}
+  .ps{font-size:12px}
+  .topbar-actions,.ta{flex-shrink:0}
+
+  /* ── Все сетки в один столбец ── */
+  .sg{grid-template-columns:1fr 1fr!important;gap:10px}
+  .sg[style*="repeat(4,1fr)"]{grid-template-columns:1fr 1fr!important}
   .mg{grid-template-columns:1fr!important}
-  /* Docs grid */
-  .dg{grid-template-columns:1fr!important}
-  /* Settings grid stacks */
-  .stg{grid-template-columns:1fr!important}
-  .snav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:8px}
-  .sni{white-space:nowrap;flex-shrink:0}
-  /* Chat stacks */
-  .cw{grid-template-columns:1fr!important;height:auto}
-  .csp{border-right:none;border-bottom:1px solid var(--bd)}
-  .cm{height:480px}
-  /* Topbar */
-  .topbar{flex-wrap:wrap;gap:12px}
-  .pt{font-size:20px}
-  /* Tickets meta wrap */
-  .tmeta{gap:8px}
-  /* Modal */
-  .modal{width:94vw;padding:20px}
-  /* PDF/preview modal grids */
-  .pdf-checks{max-height:200px;overflow-y:auto}
-  /* Bills/history rows - smaller padding */
-  .br,.hr2,.ar2{padding:12px 14px}
-  /* Settings apt grid */
+  .dg{grid-template-columns:1fr 1fr!important}
+  #page-home div[style*="grid-template-columns:1fr 310px"]{grid-template-columns:1fr!important;gap:14px}
+  div[style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr!important}
   #sp-apt div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
   #sp-profile div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
-  .meters-inputs,div[style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr!important}
-  /* History 4-col stats */
-  .sg[style*="repeat(4,1fr)"]{grid-template-columns:1fr 1fr!important}
+
+  /* ── Статистика компактнее ── */
+  .sb2{padding:16px 16px}
+  .sv{font-size:22px}
+  .s-icon,.sico{font-size:22px}
+
+  /* ── Настройки ── */
+  .stg{grid-template-columns:1fr!important;gap:14px}
+  .snav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+  .sni{white-space:nowrap;flex-shrink:0;padding:8px 14px}
+  .sr{flex-wrap:wrap;gap:10px}
+
+  /* ── Чат ── */
+  .cw{grid-template-columns:1fr!important;height:auto}
+  .csp{border-right:none;border-bottom:1px solid var(--bd);max-height:160px;overflow-y:auto}
+  .cm{height:65vh;min-height:420px}
+  .msg{max-width:85%}
+
+  /* ── Карточки/строки ── */
+  .br,.hr2,.ar2{padding:12px 14px;gap:10px}
+  .bsum,.hsum{font-size:14px}
+  .bi,.hi{width:34px;height:34px;font-size:15px}
+  .tmeta{gap:8px}
+  .aact{flex-wrap:wrap;gap:6px}
+  .ar2{flex-wrap:wrap}
+  .ar2 .aact{width:100%;margin-top:4px}
+
+  /* ── Модальные окна ── */
+  .modal{width:94vw;max-width:94vw;padding:20px;max-height:90vh;overflow-y:auto}
+  .pdf-checks{max-height:180px;overflow-y:auto}
+  .mamt{font-size:28px}
+  .pay-opt{padding:12px}
+
+  /* ── Уведомления ── */
+  .npanel{width:calc(100vw - 28px);right:-6px;max-width:330px}
+
+  /* ── Фильтры прокручиваются ── */
+  .hf{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .fb{flex-shrink:0}
+
+  /* ── Карточки заявок/новостей ── */
+  .tc,.nc2{padding:16px}
+  .ntit{font-size:14px}
+  .tti{font-size:13.5px}
+
+  /* ── Таблицы прокрутка ── */
+  .cards-scroll{overflow-x:auto}
 }
-/* Burger hidden on desktop */
-.burger{display:none;position:fixed;top:14px;left:14px;z-index:310;width:42px;height:42px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;align-items:center;justify-content:center;font-size:20px;cursor:pointer;color:var(--tx)}
+
+/* ── Маленькие телефоны ── */
+@media (max-width:480px){
+  .sg{grid-template-columns:1fr!important}
+  .sg[style*="repeat(4,1fr)"]{grid-template-columns:1fr 1fr!important}
+  .dg{grid-template-columns:1fr!important}
+  .page{padding:14px 12px;padding-top:68px}
+  .pt{font-size:19px}
+  .atitle{font-size:21px}
+  .sv{font-size:24px}
+  .mamt{font-size:26px}
+  .btn{padding:9px 14px;font-size:12.5px}
+  .modal{padding:18px}
+  .info-grid{grid-template-columns:1fr!important}
+  .sni{padding:8px 12px;font-size:12.5px}
+}
 </style>
 </head>
 <body>
@@ -348,7 +401,10 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 
 <!-- APP -->
 <div class="appg" id="appPage">
-<div class="burger" id="burger" onclick="toggleSidebar()">☰</div>
+<div class="mtopbar">
+  <div class="burger" id="burger" onclick="toggleSidebar()">☰</div>
+  <div class="mtopbar-logo"><div class="mli">🏠</div>ДомПлюс</div>
+</div>
 <div class="sb-backdrop" id="sbBackdrop" onclick="closeSidebar()"></div>
 <aside class="sb" id="sidebar">
   <div class="logo"><div class="logo-i">🏠</div><div><div class="logo-t">ДомПлюс</div><div class="logo-s">ЖКХ Платформа</div></div></div>
@@ -1174,6 +1230,8 @@ function buildReceiptHTML(month,items,total,allPaid){
   const apt=UA?('\u043a\u0432. '+UA.apartment_number+', '+UA.address+', '+(UA.city||'')):'\u2014';
   const uk=UA?UA.uk_name||'\u2014':'\u2014';
   const fio=UP?UP.full_name||'\u2014':'\u2014';
+  const city=(UA&&UA.city)?('\u0413. '+UA.city.toUpperCase()):'\u0413. \u041c\u041e\u0421\u041a\u0412\u0410';
+  const txnNum=String(Math.abs(total*7+now.getDate()*13+now.getFullYear())).slice(0,10).padStart(10,'0');
   const rows=items.map(it=>(
     '<tr>'+
     '<td style="padding:11px 14px;border-bottom:1px solid #eee;font-size:14px">'+it.icon+' '+it.name+'</td>'+
@@ -1181,19 +1239,26 @@ function buildReceiptHTML(month,items,total,allPaid){
     '<td style="padding:11px 14px;border-bottom:1px solid #eee;text-align:center"><span style="font-size:12px;color:'+(it.status==='paid'?'#16a34a':'#dc2626')+';font-weight:600">'+(it.status==='paid'?'\u041e\u043f\u043b\u0430\u0447\u0435\u043d\u043e':'\u041d\u0435 \u043e\u043f\u043b\u0430\u0447\u0435\u043d\u043e')+'</span></td>'+
     '</tr>'
   )).join('');
-  // \u041f\u0435\u0447\u0430\u0442\u044c \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u043c \u0431\u043b\u043e\u043a\u043e\u043c \u0441\u043f\u0440\u0430\u0432\u0430 (\u043d\u0435 \u043d\u0430\u043b\u043e\u0436\u0435\u043d\u0430 \u043d\u0430 \u0442\u0435\u043a\u0441\u0442)
+  // \u041d\u0430\u0441\u0442\u043e\u044f\u0449\u0430\u044f \u043a\u0440\u0443\u0433\u043b\u0430\u044f \u043f\u0435\u0447\u0430\u0442\u044c (SVG \u0441 \u0442\u0435\u043a\u0441\u0442\u043e\u043c \u043f\u043e \u043a\u0440\u0443\u0433\u0443)
   const stamp=allPaid?(
-    '<div style="display:flex;justify-content:flex-end;margin-top:30px;padding-right:30px">'+
-      '<div style="position:relative;width:140px;height:140px;transform:rotate(-12deg)">'+
-        '<div style="position:absolute;inset:0;border:3px solid #2563eb;border-radius:50%;opacity:.8"></div>'+
-        '<div style="position:absolute;inset:9px;border:1.5px solid #2563eb;border-radius:50%;opacity:.8"></div>'+
-        '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2563eb;opacity:.85;font-family:Arial">'+
-          '<div style="font-size:11px;font-weight:700;letter-spacing:1px">\u0414\u041e\u041c\u041f\u041b\u042e\u0421</div>'+
-          '<div style="font-size:26px;line-height:1.1;margin:1px 0">\u2713</div>'+
-          '<div style="font-size:13px;font-weight:700;letter-spacing:1px">\u041e\u041f\u041b\u0410\u0427\u0415\u041d\u041e</div>'+
-          '<div style="font-size:8px;margin-top:3px">'+dateStr+'</div>'+
-        '</div>'+
-      '</div>'+
+    '<div style="display:flex;justify-content:flex-end;margin-top:24px;padding-right:24px">'+
+    '<svg width="170" height="170" viewBox="0 0 200 200" style="transform:rotate(-11deg)">'+
+      '<defs>'+
+        '<path id="arcTop" d="M 28 100 A 72 72 0 0 0 172 100" fill="none"/>'+
+        '<path id="arcBot" d="M 36 100 A 64 64 0 0 1 164 100" fill="none"/>'+
+      '</defs>'+
+      '<circle cx="100" cy="100" r="95" fill="none" stroke="#1e40af" stroke-width="2.5"/>'+
+      '<circle cx="100" cy="100" r="88" fill="none" stroke="#1e40af" stroke-width="1"/>'+
+      '<circle cx="100" cy="100" r="58" fill="none" stroke="#1e40af" stroke-width="1.2"/>'+
+      '<text fill="#1e40af" font-family="Arial" font-size="13.5" font-weight="bold" letter-spacing="0.5"><textPath href="#arcTop" startOffset="50%" text-anchor="middle">\u041e\u041e\u041e \u00ab\u0414\u041e\u041c\u041f\u041b\u042e\u0421\u00bb \u2022 \u041e\u041f\u041b\u0410\u0422\u0410 \u0416\u041a\u0425</textPath></text>'+
+      '<text fill="#1e40af" font-family="Arial" font-size="11" font-weight="bold" letter-spacing="0.5"><textPath href="#arcBot" startOffset="50%" text-anchor="middle">'+city+' \u2022 \u0418\u041d\u041d 6670'+txnNum.slice(0,6)+'</textPath></text>'+
+      '<text x="20" y="104" fill="#1e40af" font-size="16" font-weight="bold">\u2733</text>'+
+      '<text x="180" y="104" fill="#1e40af" font-size="16" font-weight="bold" text-anchor="end">\u2733</text>'+
+      '<text x="100" y="86" text-anchor="middle" fill="#1e40af" font-family="Arial" font-size="20" font-weight="bold">\u2713</text>'+
+      '<text x="100" y="104" text-anchor="middle" fill="#1e40af" font-family="Arial" font-size="15" font-weight="bold">\u041e\u041f\u041b\u0410\u0427\u0415\u041d\u041e</text>'+
+      '<text x="100" y="120" text-anchor="middle" fill="#1e40af" font-family="Arial" font-size="8.5">'+dateStr+'</text>'+
+      '<text x="100" y="132" text-anchor="middle" fill="#1e40af" font-family="Arial" font-size="7">\u2116 '+txnNum+'</text>'+
+    '</svg>'+
     '</div>'
   ):'';
 
@@ -1218,17 +1283,19 @@ function buildReceiptHTML(month,items,total,allPaid){
     '.total{display:flex;justify-content:space-between;align-items:center;background:#eff4ff;border-radius:12px;padding:16px 20px;margin-top:14px}'+
     '.total .l{font-size:15px;font-weight:600;color:#1a2035}'+
     '.total .v{font-size:24px;font-weight:700;color:#2563eb}'+
-    '.foot{margin-top:24px;padding-top:18px;border-top:1px solid #eee;font-size:11px;color:#9aa5bb;line-height:1.7}'+
-    '.bar{position:fixed;top:0;left:0;right:0;background:#1a2035;padding:12px 16px;display:flex;gap:10px;justify-content:center;z-index:99}'+
+    '.foot{margin-top:20px;padding-top:18px;border-top:1px solid #eee;font-size:11px;color:#9aa5bb;line-height:1.7}'+
+    '.bar{position:fixed;top:0;left:0;right:0;background:#1a2035;padding:11px 16px;display:flex;gap:10px;justify-content:center;align-items:center;z-index:99;flex-wrap:wrap}'+
     '.bar button{padding:10px 20px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none}'+
     '.bar .save{background:#2563eb;color:#fff}'+
     '.bar .close{background:#3a4560;color:#fff}'+
-    '.spacer{height:56px}'+
+    '.bar .hint{color:#9aa5bb;font-size:12px;width:100%;text-align:center;margin-top:2px}'+
+    '.spacer{height:74px}'+
     '@media print{.bar,.spacer{display:none}body{padding:32px}}'+
     '</style></head><body>'+
     '<div class="bar">'+
-      '<button class="save" onclick="window.print()">\ud83d\udcbe \u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043a\u0430\u043a PDF / \u041f\u0435\u0447\u0430\u0442\u044c</button>'+
-      '<button class="close" onclick="window.close()">\u2715 \u0417\u0430\u043a\u0440\u044b\u0442\u044c</button>'+
+      '<button class="save" onclick="window.print()">\ud83d\udda8\ufe0f \u041f\u0435\u0447\u0430\u0442\u044c / \u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c PDF</button>'+
+      '<button class="close" onclick="window.close();setTimeout(function(){location.href=\'https://dom-plus.vercel.app/\'},150)">\u2715 \u0417\u0430\u043a\u0440\u044b\u0442\u044c</button>'+
+      '<div class="hint">\u0427\u0442\u043e\u0431\u044b \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c PDF \u2014 \u0432 \u043e\u043a\u043d\u0435 \u043f\u0435\u0447\u0430\u0442\u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u0440\u0438\u043d\u0442\u0435\u0440 \u00ab\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043a\u0430\u043a PDF\u00bb \u0438\u043b\u0438 \u00abMicrosoft Print to PDF\u00bb \u0438 \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u041f\u0435\u0447\u0430\u0442\u044c</div>'+
     '</div>'+
     '<div class="spacer"></div>'+
     '<div class="head">'+
