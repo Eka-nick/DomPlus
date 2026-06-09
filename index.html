@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1641 FETCH-DIRECT (no CDN library) -->
+<!-- VERSION v2002 pay+pdf fixes -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -713,6 +713,7 @@ class Q{
   insert(d){this.m='POST';this.body=d;return this;}
   update(d){this.m='PATCH';this.body=d;return this;}
   upsert(d){this.m='POST';this.body=d;this.up=true;return this;}
+  delete(){this.m='DELETE';return this;}
   then(res,rej){return this._run().then(res,rej);}
   async _run(){
     let url=SB_URL+'/rest/v1/'+this.t;
@@ -865,7 +866,13 @@ async function doLogin(){
     const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Входим...';
     const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
     btn.disabled=false;btn.textContent='Войти';
-    if(error){showErr('Ошибка: неверный email или пароль');return;}
+    if(error){
+      let m=error.message||'';
+      if(m.includes('Email not confirmed')){m='Email не подтверждён. Проверьте почту.';}
+      else if(m.includes('Invalid login')){m='Неверный email или пароль';}
+      else{m='Ошибка входа: '+m;}
+      showErr(m);return;
+    }
     await initApp(data.user);
   }catch(e){
     console.error('Login error:',e);
@@ -883,7 +890,15 @@ async function doRegister(){
     const btn=document.getElementById('regBtn');btn.disabled=true;btn.textContent='Создаём аккаунт...';
     const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name,phone}}});
     btn.disabled=false;btn.textContent='Создать аккаунт';
-    if(error){showErr('Ошибка: '+error.message);return;}
+    if(error){
+      let m=error.message||'';
+      if(m.includes('Password')&&m.includes('character')){m='Пароль слишком простой. Используйте буквы, цифры и спецсимвол (например: Dom2026!)';}
+      else if(m.includes('already registered')||m.includes('already been registered')){m='Этот email уже зарегистрирован. Попробуйте войти.';}
+      else if(m.includes('valid email')||m.includes('invalid')){m='Введите корректный email';}
+      else if(m.includes('at least 6')){m='Пароль минимум 6 символов';}
+      else{m='Ошибка: '+m;}
+      showErr(m);return;
+    }
     if(data.user){
       await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone,email});
       await seedData(data.user.id);
@@ -1155,33 +1170,34 @@ function toggleAllPDF(cb){
 function buildReceiptHTML(month,items,total,allPaid){
   const now=new Date();
   const dateStr=now.toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
-  const acc=UA?UA.personal_account||'—':'—';
-  const apt=UA?('кв. '+UA.apartment_number+', '+UA.address+', '+(UA.city||'')):'—';
-  const uk=UA?UA.uk_name||'—':'—';
-  const fio=UP?UP.full_name||'—':'—';
+  const acc=UA?UA.personal_account||'\u2014':'\u2014';
+  const apt=UA?('\u043a\u0432. '+UA.apartment_number+', '+UA.address+', '+(UA.city||'')):'\u2014';
+  const uk=UA?UA.uk_name||'\u2014':'\u2014';
+  const fio=UP?UP.full_name||'\u2014':'\u2014';
   const rows=items.map(it=>(
     '<tr>'+
     '<td style="padding:11px 14px;border-bottom:1px solid #eee;font-size:14px">'+it.icon+' '+it.name+'</td>'+
     '<td style="padding:11px 14px;border-bottom:1px solid #eee;text-align:right;font-size:14px;font-weight:600">'+Number(it.amount).toLocaleString('ru')+' \u20bd</td>'+
-    '<td style="padding:11px 14px;border-bottom:1px solid #eee;text-align:center"><span style="font-size:12px;color:'+(it.status==='paid'?'#16a34a':'#dc2626')+';font-weight:600">'+(it.status==='paid'?'Оплачено':'Не оплачено')+'</span></td>'+
+    '<td style="padding:11px 14px;border-bottom:1px solid #eee;text-align:center"><span style="font-size:12px;color:'+(it.status==='paid'?'#16a34a':'#dc2626')+';font-weight:600">'+(it.status==='paid'?'\u041e\u043f\u043b\u0430\u0447\u0435\u043d\u043e':'\u041d\u0435 \u043e\u043f\u043b\u0430\u0447\u0435\u043d\u043e')+'</span></td>'+
     '</tr>'
   )).join('');
-  // Печать (показываем только если всё оплачено)
+  // \u041f\u0435\u0447\u0430\u0442\u044c \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u043c \u0431\u043b\u043e\u043a\u043e\u043c \u0441\u043f\u0440\u0430\u0432\u0430 (\u043d\u0435 \u043d\u0430\u043b\u043e\u0436\u0435\u043d\u0430 \u043d\u0430 \u0442\u0435\u043a\u0441\u0442)
   const stamp=allPaid?(
-    '<div style="position:absolute;right:48px;bottom:90px;width:150px;height:150px;transform:rotate(-14deg)">'+
-      '<div style="position:relative;width:150px;height:150px;border:3px solid #2563eb;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:.85">'+
-        '<div style="position:absolute;width:128px;height:128px;border:1.5px solid #2563eb;border-radius:50%"></div>'+
-        '<div style="text-align:center;color:#2563eb;font-family:Arial,sans-serif">'+
-          '<div style="font-size:13px;font-weight:700;letter-spacing:.5px">ДОМПЛЮС</div>'+
-          '<div style="font-size:30px;line-height:1">✓</div>'+
-          '<div style="font-size:15px;font-weight:700;letter-spacing:1px">ОПЛАЧЕНО</div>'+
-          '<div style="font-size:9px;margin-top:2px">'+dateStr+'</div>'+
+    '<div style="display:flex;justify-content:flex-end;margin-top:30px;padding-right:30px">'+
+      '<div style="position:relative;width:140px;height:140px;transform:rotate(-12deg)">'+
+        '<div style="position:absolute;inset:0;border:3px solid #2563eb;border-radius:50%;opacity:.8"></div>'+
+        '<div style="position:absolute;inset:9px;border:1.5px solid #2563eb;border-radius:50%;opacity:.8"></div>'+
+        '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2563eb;opacity:.85;font-family:Arial">'+
+          '<div style="font-size:11px;font-weight:700;letter-spacing:1px">\u0414\u041e\u041c\u041f\u041b\u042e\u0421</div>'+
+          '<div style="font-size:26px;line-height:1.1;margin:1px 0">\u2713</div>'+
+          '<div style="font-size:13px;font-weight:700;letter-spacing:1px">\u041e\u041f\u041b\u0410\u0427\u0415\u041d\u041e</div>'+
+          '<div style="font-size:8px;margin-top:3px">'+dateStr+'</div>'+
         '</div>'+
       '</div>'+
     '</div>'
   ):'';
 
-  return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Квитанция '+month+'</title>'+
+  return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>\u041a\u0432\u0438\u0442\u0430\u043d\u0446\u0438\u044f '+month+'</title>'+
     '<style>'+
     '@page{size:A4;margin:0}'+
     '*{margin:0;padding:0;box-sizing:border-box}'+
@@ -1202,25 +1218,33 @@ function buildReceiptHTML(month,items,total,allPaid){
     '.total{display:flex;justify-content:space-between;align-items:center;background:#eff4ff;border-radius:12px;padding:16px 20px;margin-top:14px}'+
     '.total .l{font-size:15px;font-weight:600;color:#1a2035}'+
     '.total .v{font-size:24px;font-weight:700;color:#2563eb}'+
-    '.foot{margin-top:36px;padding-top:18px;border-top:1px solid #eee;font-size:11px;color:#9aa5bb;line-height:1.7}'+
-    '.print-btn{position:fixed;top:20px;right:20px;background:#2563eb;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.3)}'+
-    '@media print{.print-btn{display:none}body{padding:32px}}'+
+    '.foot{margin-top:24px;padding-top:18px;border-top:1px solid #eee;font-size:11px;color:#9aa5bb;line-height:1.7}'+
+    '.bar{position:fixed;top:0;left:0;right:0;background:#1a2035;padding:12px 16px;display:flex;gap:10px;justify-content:center;z-index:99}'+
+    '.bar button{padding:10px 20px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none}'+
+    '.bar .save{background:#2563eb;color:#fff}'+
+    '.bar .close{background:#3a4560;color:#fff}'+
+    '.spacer{height:56px}'+
+    '@media print{.bar,.spacer{display:none}body{padding:32px}}'+
     '</style></head><body>'+
-    '<button class="print-btn" onclick="window.print()">🖨️ Сохранить как PDF / Печать</button>'+
+    '<div class="bar">'+
+      '<button class="save" onclick="window.print()">\ud83d\udcbe \u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043a\u0430\u043a PDF / \u041f\u0435\u0447\u0430\u0442\u044c</button>'+
+      '<button class="close" onclick="window.close()">\u2715 \u0417\u0430\u043a\u0440\u044b\u0442\u044c</button>'+
+    '</div>'+
+    '<div class="spacer"></div>'+
     '<div class="head">'+
-      '<div class="logo"><div class="logo-ico">🏠</div><div><div class="brand">ДомПлюс</div><div class="brand-sub">ЖКХ Платформа</div></div></div>'+
-      '<div class="doc-title"><div class="t">Квитанция</div><div class="p">'+month+'</div></div>'+
+      '<div class="logo"><div class="logo-ico">\ud83c\udfe0</div><div><div class="brand">\u0414\u043e\u043c\u041f\u043b\u044e\u0441</div><div class="brand-sub">\u0416\u041a\u0425 \u041f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430</div></div></div>'+
+      '<div class="doc-title"><div class="t">\u041a\u0432\u0438\u0442\u0430\u043d\u0446\u0438\u044f</div><div class="p">'+month+'</div></div>'+
     '</div>'+
     '<div class="info">'+
-      '<div><span>Плательщик:</span> <b>'+fio+'</b></div>'+
-      '<div><span>Адрес:</span> <b>'+apt+'</b></div>'+
-      '<div><span>Лицевой счёт:</span> <b>'+acc+'</b></div>'+
-      '<div><span>Управляющая компания:</span> <b>'+uk+'</b></div>'+
+      '<div><span>\u041f\u043b\u0430\u0442\u0435\u043b\u044c\u0449\u0438\u043a:</span> <b>'+fio+'</b></div>'+
+      '<div><span>\u0410\u0434\u0440\u0435\u0441:</span> <b>'+apt+'</b></div>'+
+      '<div><span>\u041b\u0438\u0446\u0435\u0432\u043e\u0439 \u0441\u0447\u0451\u0442:</span> <b>'+acc+'</b></div>'+
+      '<div><span>\u0423\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0430\u044f \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u044f:</span> <b>'+uk+'</b></div>'+
     '</div>'+
-    '<table><thead><tr><th>Услуга</th><th>Сумма</th><th>Статус</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<div class="total"><span class="l">ИТОГО</span><span class="v">'+Number(total).toLocaleString('ru')+' \u20bd</span></div>'+
+    '<table><thead><tr><th>\u0423\u0441\u043b\u0443\u0433\u0430</th><th>\u0421\u0443\u043c\u043c\u0430</th><th>\u0421\u0442\u0430\u0442\u0443\u0441</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="total"><span class="l">\u0418\u0422\u041e\u0413\u041e</span><span class="v">'+Number(total).toLocaleString('ru')+' \u20bd</span></div>'+
     stamp+
-    '<div class="foot">Документ сформирован автоматически в системе ДомПлюс '+dateStr+'.<br>Квитанция носит информационный характер. По вопросам начислений обращайтесь в вашу управляющую компанию.</div>'+
+    '<div class="foot">\u0414\u043e\u043a\u0443\u043c\u0435\u043d\u0442 \u0441\u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438 \u0432 \u0441\u0438\u0441\u0442\u0435\u043c\u0435 \u0414\u043e\u043c\u041f\u043b\u044e\u0441 '+dateStr+'.<br>\u041a\u0432\u0438\u0442\u0430\u043d\u0446\u0438\u044f \u043d\u043e\u0441\u0438\u0442 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440. \u041f\u043e \u0432\u043e\u043f\u0440\u043e\u0441\u0430\u043c \u043d\u0430\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u0439 \u043e\u0431\u0440\u0430\u0449\u0430\u0439\u0442\u0435\u0441\u044c \u0432 \u0432\u0430\u0448\u0443 \u0443\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0449\u0443\u044e \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u044e.</div>'+
     '</body></html>';
 }
 
@@ -1758,8 +1782,8 @@ function selectPayMethod(el,method){
   btn.disabled=false;btn.style.opacity='1';
   const extra=document.getElementById('payExtra');
   if(method==='sbp'){
-    extra.innerHTML='<div style="text-align:center;padding:18px 0"><div style="width:160px;height:160px;margin:0 auto;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd2)"><div style="font-size:13px;color:#333;text-align:center;line-height:1.5">📱<br>QR-код СБП<br><span style="font-size:10px;color:#888">отсканируйте<br>в приложении банка</span></div></div><div style="font-size:11px;color:var(--mu);margin-top:10px">Откройте приложение банка и отсканируйте QR</div></div>';
-    btn.textContent='Я оплатил по СБП';
+    extra.innerHTML='<div style="text-align:center;padding:18px 0"><div style="width:160px;height:160px;margin:0 auto;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd2)"><div style="font-size:13px;color:#333;text-align:center;line-height:1.5">📱<br>QR-код СБП<br><span style="font-size:10px;color:#888">отсканируйте<br>в приложении банка</span></div></div><div style="font-size:11px;color:var(--mu);margin-top:10px">Откройте приложение банка и отсканируйте QR-код для оплаты</div></div>';
+    btn.textContent='💳 Оплатить '+fmt(_payCtx.amount);
   }else if(method==='newcard'){
     extra.innerHTML='<div style="margin-top:14px"><div class="inpg"><label class="inpl">Номер карты</label><input class="inp" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNum(this)"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="inpg" style="margin:0"><label class="inpl">ММ/ГГ</label><input class="inp" id="payCardExp" placeholder="09/27" maxlength="5" oninput="formatCardExp(this)"></div><div class="inpg" style="margin:0"><label class="inpl">CVC</label><input class="inp" id="payCardCvc" type="password" placeholder="•••" maxlength="3"></div></div></div>';
     btn.textContent='💳 Оплатить';
