@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1746 UK-PANEL -->
+<!-- VERSION v1847 ZAHOD1 realtime+clean -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -123,7 +123,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 .hinf{flex:1}.hn{font-size:13px;font-weight:500}.hd{font-size:11px;color:var(--mu);margin-top:1px}
 .hsum{font-size:14px;font-weight:700;color:var(--gr)}
 /* CHART */
-.cb{display:flex;align-items:flex-end;gap:8px;height:90px;margin:14px 0 6px}
+.cb{display:flex;align-items:flex-end;justify-content:center;gap:8px;height:90px;margin:14px 0 6px}
 .bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
 .bw:hover .bar{opacity:1!important;transform:scaleY(1.05);transform-origin:bottom}
 .bar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:all .2s}.bl2{font-size:10px;color:var(--mu)}.bv{font-size:10px;color:var(--mu)}
@@ -750,7 +750,15 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 
 <!-- СВОДКА -->
 <div id="uk-dashboard" class="page active">
-  <div class="topbar"><div><div class="pt">Сводка</div><div class="ps" id="ukWelcome">Панель управления</div></div></div>
+  <div class="topbar"><div><div class="pt">Сводка</div><div class="ps" id="ukWelcome">Панель управления</div></div>
+    <div class="ta"><div class="nw">
+      <div class="nbtn" id="ukNBtn" onclick="toggleUKNotif()">🔔<div class="ndot off" id="ukNDot"></div></div>
+      <div class="npanel" id="ukNPanel">
+        <div class="nhead"><span>Уведомления</span><span class="ncl" onclick="clearUKNotifs()">Очистить</span></div>
+        <div id="ukNList"><div class="nemp">Загрузка...</div></div>
+      </div>
+    </div></div>
+  </div>
   <div class="sg">
     <div class="sb2 bl"><div class="sl">Домов</div><div class="sv bl" id="ukStatHouses">0</div><div class="sh2">В управлении</div><div class="sico">🏘️</div></div>
     <div class="sb2 gr"><div class="sl">Жителей</div><div class="sv gr" id="ukStatResidents">0</div><div class="sh2">Зарегистрировано</div><div class="sico">👥</div></div>
@@ -1131,61 +1139,18 @@ function selectRole(role){
 }
 
 async function doLogout(){
-  await sb.auth.signOut();CU=null;UP=null;
+  stopPolling();
+  await sb.auth.signOut();CU=null;UP=null;UCompany=null;
   document.getElementById('authPage').style.display='flex';
   document.getElementById('appPage').style.display='none';
+  document.getElementById('ukPage').style.display='none';
 }
 
 // ── SEED ──
 async function seedData(uid){
-  const{data:apt}=await sb.from('apartments').insert({
-    user_id:uid,address:'ул. Садовая, 12',city:'Екатеринбург',
-    region:'Свердловская область',district:'Кировский',
-    apartment_number:'47',floor:5,area:54.2,
-    personal_account:'472'+Math.random().toString().slice(2,7),
-    uk_name:'УК Комфорт'
-  }).select().single();
-  const aid=apt?.id,now=new Date();
-  const period=now.toLocaleString('ru',{month:'long',year:'numeric'});
-  for(const b of[
-    {name:'Холодная вода',amount:680,icon:'💧',org:'ООО Водоканал',status:'unpaid'},
-    {name:'Горячая вода',amount:540,icon:'🌡️',org:'Теплосеть',status:'unpaid'},
-    {name:'Электроэнергия',amount:1240,icon:'⚡',org:'Энергосбыт',status:'unpaid'},
-    {name:'Отопление',amount:1980,icon:'🔥',org:'Теплосеть',status:'unpaid'},
-    {name:'Управление домом',amount:920,icon:'🏢',org:'УК Комфорт',status:'paid'}
-  ])await sb.from('bills').insert({user_id:uid,apartment_id:aid,...b,period,due_date:new Date(now.getFullYear(),now.getMonth()+1,25).toISOString().split('T')[0],paid_at:b.status==='paid'?now.toISOString():null});
-  await sb.from('meters').insert([
-    {user_id:uid,apartment_id:aid,type:'water_cold',name:'Холодная вода',icon:'💧',unit:'м³',current_value:128,previous_value:121,status:'accepted',period},
-    {user_id:uid,apartment_id:aid,type:'water_hot',name:'Горячая вода',icon:'🌡️',unit:'м³',current_value:84,previous_value:79,status:'accepted',period},
-    {user_id:uid,apartment_id:aid,type:'electricity',name:'Электроэнергия',icon:'⚡',unit:'кВт·ч',current_value:7161,previous_value:7018,status:'pending',period}
-  ]);
-  for(const p of[
-    {n:'Холодная вода — Май',a:710,i:'💧',pr:'Май 2026',m:1},
-    {n:'Горячая вода — Май',a:520,i:'🌡️',pr:'Май 2026',m:1},
-    {n:'Электроэнергия — Май',a:1190,i:'⚡',pr:'Май 2026',m:1},
-    {n:'Отопление — Май',a:2100,i:'🔥',pr:'Май 2026',m:1},
-    {n:'Управление домом — Май',a:920,i:'🏢',pr:'Май 2026',m:1},
-    {n:'Холодная вода — Апрель',a:695,i:'💧',pr:'Апрель 2026',m:2},
-    {n:'Горячая вода — Апрель',a:510,i:'🌡️',pr:'Апрель 2026',m:2},
-    {n:'Электроэнергия — Апрель',a:1310,i:'⚡',pr:'Апрель 2026',m:2},
-    {n:'Отопление — Апрель',a:2240,i:'🔥',pr:'Апрель 2026',m:2},
-    {n:'Управление домом — Апрель',a:920,i:'🏢',pr:'Апрель 2026',m:2},
-    {n:'Холодная вода — Март',a:680,i:'💧',pr:'Март 2026',m:3},
-    {n:'Горячая вода — Март',a:500,i:'🌡️',pr:'Март 2026',m:3},
-    {n:'Электроэнергия — Март',a:1350,i:'⚡',pr:'Март 2026',m:3},
-    {n:'Отопление — Март',a:2400,i:'🔥',pr:'Март 2026',m:3},
-    {n:'Управление домом — Март',a:920,i:'🏢',pr:'Март 2026',m:3}
-  ]){const d=new Date();d.setMonth(d.getMonth()-p.m);await sb.from('payments').insert({user_id:uid,bill_name:p.n,amount:p.a,icon:p.i,period:p.pr,method:'card',card_last4:'4218',paid_at:d.toISOString()});}
-  await sb.from('tickets').insert([
-    {user_id:uid,apartment_id:aid,number:'ЗВ-2024-0312',category:'🔧 Сантехника',description:'Течёт кран на кухне. Нужна замена прокладки.',status:'progress',master:'Иванов А.'},
-    {user_id:uid,apartment_id:aid,number:'ЗВ-2024-0298',category:'⚡ Электрика',description:'Не работает розетка в коридоре.',status:'new'},
-    {user_id:uid,apartment_id:aid,number:'ЗВ-2024-0255',category:'🪟 Окна и двери',description:'Балконная дверь скрипит и плохо закрывается.',status:'done',master:'Петров С.'}
-  ]);
-  await sb.from('notifications').insert([
-    {user_id:uid,icon:'🏢',bg:'var(--grd)',text:'Управление домом — оплачено 920 ₽',read:false},
-    {user_id:uid,icon:'⚡',bg:'var(--ord)',text:'Выставлены квитанции за текущий месяц',read:false},
-    {user_id:uid,icon:'📋',bg:'var(--pud)',text:'Заявка #0312 принята в работу',read:true}
-  ]);
+  // Новый житель начинает с чистого кабинета.
+  // Квитанции выставляет УК, счётчики житель заводит сам, новости общие для дома.
+  await sb.from('notifications').insert({user_id:uid,icon:'👋',bg:'var(--acd)',text:'Добро пожаловать в ДомПлюс! Заполните данные квартиры в настройках и выберите вашу УК.',read:false});
 }
 
 // ── INIT ──
@@ -1208,6 +1173,7 @@ async function initApp(user){
 async function loadAll(){
   await Promise.all([lPr(),lBills(),lPay(),lMet(),lTick(),lNot(),lCards()]);
   renderHome();renderSidebar();
+  startPolling();
 }
 async function lPr(){
   const{data}=await sb.from('profiles').select('*').eq('id',CU.id).single();UP=data;
@@ -1347,6 +1313,7 @@ async function doConfirmSingle(id){
   await sb.from('bills').update({status:'paid',paid_at:new Date().toISOString()}).eq('id',id);
   await sb.from('payments').insert({user_id:CU.id,bill_id:id,bill_name:b.name+' — '+b.period,amount:b.amount,icon:b.icon,period:b.period,method:'card',card_last4:'4218'});
   await sb.from('notifications').insert({user_id:CU.id,icon:'✅',bg:'var(--grd)',text:b.name+' — оплачено '+fmt(b.amount),read:false});
+  await notifyUK('💰','var(--grd)',(UP?.full_name||'Житель')+' оплатил «'+b.name+'» — '+fmt(b.amount));
   await lBills();await lPay();await lNot();
   renderHome();renderBills();renderSidebar();
   toast('📧',b.name+' '+fmt(b.amount)+' — чек на email');
@@ -1370,6 +1337,7 @@ async function doConfirmAll(){
     await sb.from('payments').insert({user_id:CU.id,bill_id:b.id,bill_name:b.name+' — '+b.period,amount:b.amount,icon:b.icon,period:b.period,method:'card',card_last4:'4218'});
   }
   await sb.from('notifications').insert({user_id:CU.id,icon:'🎉',bg:'var(--grd)',text:'Все квитанции оплачены — '+fmt(tot),read:false});
+  await notifyUK('💰','var(--grd)',(UP?.full_name||'Житель')+' оплатил все квитанции — '+fmt(tot));
   await lBills();await lPay();await lNot();
   renderHome();renderBills();renderSidebar();
   toast('🎉','Все квитанции оплачены — '+fmt(tot));
@@ -1563,7 +1531,7 @@ function renderHistList(month){
 // ── METERS ──
 function renderMeters(){
   const el=document.getElementById('mGrid');
-  if(!UM.length){el.innerHTML='<div class="emp" style="grid-column:1/-1"><div class="big">📊</div><p>Нет данных</p></div>';return;}
+  if(!UM.length){el.innerHTML='<div class="emp" style="grid-column:1/-1"><div class="big">📊</div><p>У вас пока нет счётчиков.<br>Введите показания ниже — счётчики добавятся автоматически.</p></div>';return;}
   const bc={'water_cold':'var(--ac)','water_hot':'var(--rd)','electricity':'var(--or)'};
   const nm={'water_cold':11,'water_hot':8,'electricity':230};
   el.innerHTML=UM.map(m=>{
@@ -1583,12 +1551,25 @@ async function submitMeters(){
   const cold=document.getElementById('mCold').value,hot=document.getElementById('mHot').value,elec=document.getElementById('mElec').value;
   if(!cold&&!hot&&!elec){alert('Введите хотя бы одно показание');return;}
   const period=new Date().toLocaleString('ru',{month:'long',year:'numeric'});
+  const meta={
+    water_cold:{name:'Холодная вода',icon:'💧',unit:'м³'},
+    water_hot:{name:'Горячая вода',icon:'🌡️',unit:'м³'},
+    electricity:{name:'Электроэнергия',icon:'⚡',unit:'кВт·ч'}
+  };
   const upd=[{type:'water_cold',val:parseFloat(cold)},{type:'water_hot',val:parseFloat(hot)},{type:'electricity',val:parseFloat(elec)}].filter(u=>u.val&&!isNaN(u.val));
   for(const u of upd){
     const m=UM.find(x=>x.type===u.type);
-    if(m)await sb.from('meters').update({previous_value:m.current_value,current_value:u.val,status:'accepted',period,submitted_at:new Date().toISOString()}).eq('id',m.id);
+    if(m){
+      // обновляем существующий счётчик
+      await sb.from('meters').update({previous_value:m.current_value,current_value:u.val,status:'accepted',period,submitted_at:new Date().toISOString()}).eq('id',m.id);
+    }else{
+      // создаём новый счётчик (житель заводит сам)
+      const mt=meta[u.type];
+      await sb.from('meters').insert({user_id:CU.id,apartment_id:UA?.id,type:u.type,name:mt.name,icon:mt.icon,unit:mt.unit,current_value:u.val,previous_value:u.val,status:'accepted',period,submitted_at:new Date().toISOString()});
+    }
   }
   await sb.from('notifications').insert({user_id:CU.id,icon:'📊',bg:'var(--acd)',text:'Показания счётчиков переданы в УК',read:false});
+  await notifyUK('📊','var(--acd)','Житель '+(UP?.full_name||'')+' передал показания счётчиков');
   await lMet();await lNot();renderMeters();renderNotifs();
   toast('📊','Показания переданы в УК');
   ['mCold','mHot','mElec'].forEach(id=>document.getElementById(id).value='');
@@ -1615,12 +1596,24 @@ function filterTickets(el,status){
   renderTickets(status);
 }
 
+// Уведомить администратора УК жителя
+async function notifyUK(icon,bg,text){
+  try{
+    if(!UA||!UA.company_id)return;
+    const{data:comp}=await sb.from('companies').select('admin_id').eq('id',UA.company_id).single();
+    if(comp&&comp.admin_id){
+      await sb.from('notifications').insert({user_id:comp.admin_id,icon,bg,text,read:false});
+    }
+  }catch(e){}
+}
+
 async function createTicket(){
   const cat=document.getElementById('tCat').value,desc=document.getElementById('tDesc').value;
   if(!desc.trim()){alert('Опишите проблему');return;}
   const num='ЗВ-'+new Date().getFullYear()+'-'+Math.floor(Math.random()*9000+1000);
   await sb.from('tickets').insert({user_id:CU.id,apartment_id:UA?.id,company_id:UA?.company_id||null,number:num,category:cat,description:desc,status:'new'});
   await sb.from('notifications').insert({user_id:CU.id,icon:'📋',bg:'var(--pud)',text:'Заявка #'+num+' подана',read:false});
+  await notifyUK('📋','var(--pud)','Новая заявка #'+num+' от '+(UP?.full_name||'жителя')+': '+cat);
   await lTick();await lNot();renderTickets('all');renderSidebar();renderNotifs();
   document.getElementById('ntForm').style.display='none';document.getElementById('tDesc').value='';
   toast('📋','Заявка '+num+' подана успешно');
@@ -1641,7 +1634,7 @@ function renderNotifs(){
 async function markNotif(id){await sb.from('notifications').update({read:true}).eq('id',id);await lNot();renderNotifs();}
 async function clearNotifs(){await sb.from('notifications').update({read:true}).eq('user_id',CU.id);await lNot();renderNotifs();}
 function toggleNotif(){const p=document.getElementById('nPanel');p.classList.toggle('open');if(p.classList.contains('open'))renderNotifs();}
-document.addEventListener('click',e=>{if(!e.target.closest('#nBtn')&&!e.target.closest('#nPanel'))document.getElementById('nPanel').classList.remove('open');});
+document.addEventListener('click',e=>{if(!e.target.closest('#nBtn')&&!e.target.closest('#nPanel'))document.getElementById('nPanel').classList.remove('open');if(!e.target.closest('#ukNBtn')&&!e.target.closest('#ukNPanel')){const p=document.getElementById('ukNPanel');if(p)p.classList.remove('open');}});
 
 // ── ARCHIVE / DOCS ──
 function renderArchive(){
@@ -2070,6 +2063,27 @@ async function processPayment(){
 // ПАНЕЛЬ УПРАВЛЯЮЩЕЙ КОМПАНИИ — логика
 // ═══════════════════════════════════════════
 let UCompany=null,UHouses=[],UResidents=[],UCompBills=[],UCompTickets=[];
+let UKNotifs=[];
+
+async function lUKNot(){
+  const{data}=await sb.from('notifications').select('*').eq('user_id',CU.id).order('created_at',{ascending:false});
+  UKNotifs=data||[];
+}
+
+function renderUKNotifs(){
+  const el=document.getElementById('ukNList');
+  if(!el)return;
+  const u=UKNotifs.filter(n=>!n.read).length;
+  const dot=document.getElementById('ukNDot');if(dot)dot.classList.toggle('off',u===0);
+  if(!UKNotifs.length){el.innerHTML='<div class="nemp">🎉 Нет уведомлений</div>';return;}
+  el.innerHTML=UKNotifs.slice(0,10).map(n=>{
+    const t=new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'});
+    return '<div class="nitem'+(n.read?'':' unread')+'" onclick="markUKNotif(\''+n.id+'\')"><div class="nico" style="background:'+(n.bg||'var(--acd)')+'">'+(n.icon||'🔔')+'</div><div style="flex:1"><div class="ntxt">'+n.text+'</div><div class="ntime">'+t+'</div></div></div>';
+  }).join('');
+}
+async function markUKNotif(id){await sb.from('notifications').update({read:true}).eq('id',id);await lUKNot();renderUKNotifs();}
+async function clearUKNotifs(){await sb.from('notifications').update({read:true}).eq('user_id',CU.id);await lUKNot();renderUKNotifs();}
+function toggleUKNotif(){const p=document.getElementById('ukNPanel');p.classList.toggle('open');if(p.classList.contains('open'))renderUKNotifs();}
 
 async function loadUKData(){
   // 1. Компания администратора
@@ -2090,6 +2104,9 @@ async function loadUKData(){
     UCompTickets=tk||[];
   }
   renderUKAll();
+  await lUKNot();
+  renderUKNotifs();
+  startPolling();
 }
 
 function renderUKAll(){
@@ -2364,6 +2381,78 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 
 // ── ДИАГНОСТИКА ──
 async function runDiagnostics(){return;}
+
+// ═══════════════════════════════════════════
+// АВТООБНОВЛЕНИЕ В РЕАЛЬНОМ ВРЕМЕНИ (опрос каждые 7 сек)
+// Работает через обычный fetch — надёжно в России
+// ═══════════════════════════════════════════
+let _pollTimer=null;
+let _lastSnapshot='';
+
+function startPolling(){
+  stopPolling();
+  _pollTimer=setInterval(pollUpdates,7000);
+}
+function stopPolling(){
+  if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}
+}
+
+async function pollUpdates(){
+  if(!CU)return;
+  // Не опрашивать когда вкладка скрыта (экономия)
+  if(document.hidden)return;
+  try{
+    if(UP&&UP.role==='uk_admin'){
+      await pollUK();
+    }else{
+      await pollResident();
+    }
+  }catch(e){/* тихо игнорируем сетевые сбои */}
+}
+
+async function pollResident(){
+  // Считываем заявки, квитанции, уведомления
+  const[tk,bl,nt]=await Promise.all([
+    sb.from('tickets').select('*').eq('user_id',CU.id).order('created_at',{ascending:false}),
+    sb.from('bills').select('*').eq('user_id',CU.id).order('created_at',{ascending:false}),
+    sb.from('notifications').select('*').eq('user_id',CU.id).order('created_at',{ascending:false})
+  ]);
+  const snap=JSON.stringify({t:(tk.data||[]).map(x=>x.id+x.status),b:(bl.data||[]).map(x=>x.id+x.status),n:(nt.data||[]).length});
+  if(snap!==_lastSnapshot){
+    _lastSnapshot=snap;
+    UT=tk.data||[];UB=bl.data||[];UN=nt.data||[];
+    // Перерисовываем активные элементы
+    const active=document.querySelector('#appPage .page.active');
+    if(active){
+      const id=active.id;
+      if(id==='page-home')renderHome();
+      if(id==='page-bills')renderBills();
+      if(id==='page-tickets'){const f=document.querySelector('#page-tickets .fb.active');renderTickets(f?(f.getAttribute('onclick').match(/'(\w+)'/)||[])[1]||'all':'all');}
+      if(id==='page-chat'&&chatMode==='dispatcher')renderDispatcher();
+    }
+    renderNotifs();renderSidebar();
+  }
+}
+
+async function pollUK(){
+  if(!UCompany)return;
+  const[tk,bl,res,nt]=await Promise.all([
+    sb.from('tickets').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false}),
+    sb.from('bills').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false}),
+    sb.from('profiles').select('*').eq('company_id',UCompany.id),
+    sb.from('notifications').select('*').eq('user_id',CU.id).order('created_at',{ascending:false})
+  ]);
+  const snap=JSON.stringify({t:(tk.data||[]).map(x=>x.id+x.status),b:(bl.data||[]).map(x=>x.id+x.status),r:(res.data||[]).length,n:(nt.data||[]).length});
+  if(snap!==_lastSnapshot){
+    _lastSnapshot=snap;
+    UCompTickets=tk.data||[];
+    UCompBills=bl.data||[];
+    UResidents=(res.data||[]).filter(r=>r.role!=='uk_admin');
+    UKNotifs=nt.data||[];
+    renderUKAll();
+    renderUKNotifs();
+  }
+}
 
 // ── STARTUP ──
 function startupSequence(){
