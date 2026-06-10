@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v2025 FINAL mobile+stamp -->
+<!-- VERSION v1746 UK-PANEL -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -244,6 +244,10 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 .pay-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--mu2);flex-shrink:0;transition:all .15s}
 .pay-opt.sel .pay-radio{border-color:var(--ac);background:var(--ac);box-shadow:inset 0 0 0 3px var(--sf2)}
 
+.role-opt{flex:1;padding:11px 10px;text-align:center;border:1.5px solid var(--bd2);border-radius:10px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--mu);transition:all .15s;user-select:none}
+.role-opt:hover{border-color:var(--ac)}
+.role-opt.active{border-color:var(--ac);background:var(--acd);color:var(--ac)}
+
 /* ═══ МОБИЛЬНАЯ АДАПТАЦИЯ ═══ */
 /* Бургер скрыт на десктопе */
 .burger{display:none}
@@ -393,6 +397,13 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
         <div class="ig"><label class="il">Email</label><input class="if" type="email" id="rEmail" placeholder="example@mail.ru"></div>
         <div class="ig"><label class="il">Телефон</label><input class="if" type="tel" id="rPhone" placeholder="+7 (___) ___-__-__"></div>
         <div class="ig"><label class="il">Пароль (мин. 6 символов)</label><input class="if" type="password" id="rPass" placeholder="••••••••"></div>
+        <div class="ig"><label class="il">Я регистрируюсь как</label>
+          <div style="display:flex;gap:8px">
+            <div class="role-opt active" id="role-resident" onclick="selectRole('resident')">🏠 Житель</div>
+            <div class="role-opt" id="role-uk" onclick="selectRole('uk_admin')">🏢 Управляющая компания</div>
+          </div>
+        </div>
+        <div class="ig" id="ukNameField" style="display:none"><label class="il">Название УК</label><input class="if" type="text" id="rUKName" placeholder="УК Комфорт"></div>
         <button class="btn-auth" id="regBtn" onclick="doRegister()">Создать аккаунт</button>
       </div>
     </div>
@@ -706,6 +717,136 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 
 </div></div><!-- end main, end appPage -->
 
+<!-- ═══ ПАНЕЛЬ УПРАВЛЯЮЩЕЙ КОМПАНИИ ═══ -->
+<div class="appg" id="ukPage" style="display:none">
+<div class="mtopbar">
+  <div class="burger" onclick="document.getElementById('ukSidebar').classList.toggle('open');document.getElementById('ukBackdrop').classList.toggle('open')">☰</div>
+  <div class="mtopbar-logo"><div class="mli">🏢</div>ДомПлюс УК</div>
+</div>
+<div class="sb-backdrop" id="ukBackdrop" onclick="document.getElementById('ukSidebar').classList.remove('open');this.classList.remove('open')"></div>
+<aside class="sb" id="ukSidebar">
+  <div class="logo"><div class="logo-i">🏢</div><div><div class="logo-t">ДомПлюс</div><div class="logo-s">Кабинет УК</div></div></div>
+  <div class="nl">Управление</div>
+  <div class="ni active" onclick="ukGoto('dashboard',this)"><span class="ico">📊</span>Сводка</div>
+  <div class="ni" onclick="ukGoto('houses',this)"><span class="ico">🏘️</span>Дома</div>
+  <div class="ni" onclick="ukGoto('residents',this)"><span class="ico">👥</span>Жители</div>
+  <div class="ni" onclick="ukGoto('billing',this)"><span class="ico">💳</span>Начисления</div>
+  <div class="ni" onclick="ukGoto('uktickets',this)"><span class="ico">📋</span>Заявки<span class="nb" id="ukTBadge" style="display:none">0</span></div>
+  <div class="nl">Аккаунт</div>
+  <div class="ni" onclick="ukGoto('uksettings',this)"><span class="ico">⚙️</span>Настройки УК</div>
+  <div class="sb-bot">
+    <div class="th-row">
+      <span class="th-lbl"><span id="ukThIcon">🌙</span><span style="margin-left:4px" id="ukThTxt">Тёмная тема</span></span>
+      <label class="th-sw"><input type="checkbox" id="ukThToggle" onchange="toggleTheme(this)"><span class="th-tr"></span></label>
+    </div>
+    <div class="ub" onclick="ukGoto('uksettings',null)">
+      <div class="ava" id="ukAva" style="background:linear-gradient(135deg,var(--ac),var(--pu))">УК</div>
+      <div><div class="un" id="ukName">УК</div><div class="ua">Администратор</div></div>
+    </div>
+    <button class="btn brd bsm" style="width:100%;justify-content:center;margin-top:8px" onclick="doLogout()">Выйти</button>
+  </div>
+</aside>
+<div class="main">
+
+<!-- СВОДКА -->
+<div id="uk-dashboard" class="page active">
+  <div class="topbar"><div><div class="pt">Сводка</div><div class="ps" id="ukWelcome">Панель управления</div></div></div>
+  <div class="sg">
+    <div class="sb2 bl"><div class="sl">Домов</div><div class="sv bl" id="ukStatHouses">0</div><div class="sh2">В управлении</div><div class="sico">🏘️</div></div>
+    <div class="sb2 gr"><div class="sl">Жителей</div><div class="sv gr" id="ukStatResidents">0</div><div class="sh2">Зарегистрировано</div><div class="sico">👥</div></div>
+    <div class="sb2 or"><div class="sl">Заявок открыто</div><div class="sv or" id="ukStatTickets">0</div><div class="sh2">Требуют внимания</div><div class="sico">📋</div></div>
+  </div>
+  <div class="sg">
+    <div class="sb2"><div class="sl">Начислено за месяц</div><div class="sv" style="color:var(--pu)" id="ukStatBilled">0 ₽</div><div class="sh2">Всего выставлено</div></div>
+    <div class="sb2 gr"><div class="sl">Оплачено</div><div class="sv gr" id="ukStatPaid">0 ₽</div><div class="sh2">Поступило</div></div>
+    <div class="sb2 or"><div class="sl">Задолженность</div><div class="sv or" id="ukStatDebt">0 ₽</div><div class="sh2">Не оплачено</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct">Последние заявки</span><span class="ca" onclick="ukGoto('uktickets',null)">Все →</span></div>
+    <div id="ukRecentTickets"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+  </div>
+</div>
+
+<!-- ДОМА -->
+<div id="uk-houses" class="page">
+  <div class="topbar"><div><div class="pt">Дома</div><div class="ps">Дома в управлении вашей УК</div></div><button class="btn bp bsm" onclick="document.getElementById('addHouseForm').style.display='block'">+ Добавить дом</button></div>
+  <div id="addHouseForm" style="display:none;background:var(--sf);border:1px solid var(--bd);border-radius:var(--ra);padding:24px;margin-bottom:22px">
+    <h4 style="font-size:15px;font-weight:600;margin-bottom:18px">🏘️ Новый дом</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="inpg" style="margin:0"><label class="inpl">Адрес (улица, дом)</label><input class="inp" id="hAddr" placeholder="ул. Садовая, 12"></div>
+      <div class="inpg" style="margin:0"><label class="inpl">Город</label><input class="inp" id="hCity" placeholder="Москва"></div>
+      <div class="inpg" style="margin:0"><label class="inpl">Этажей</label><input class="inp" type="number" id="hFloors" placeholder="9"></div>
+      <div class="inpg" style="margin:0"><label class="inpl">Подъездов</label><input class="inp" type="number" id="hEntr" placeholder="4"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px"><button class="btn bp" onclick="addHouse()">Добавить</button><button class="btn bg2" onclick="document.getElementById('addHouseForm').style.display='none'">Отмена</button></div>
+  </div>
+  <div id="ukHousesList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+</div>
+
+<!-- ЖИТЕЛИ -->
+<div id="uk-residents" class="page">
+  <div class="topbar"><div><div class="pt">Жители</div><div class="ps">Жители домов вашей УК</div></div></div>
+  <div class="card"><div class="ch"><span class="ct">Список жителей</span><span class="ca" id="ukResCount"></span></div>
+    <div id="ukResidentsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+  </div>
+</div>
+
+<!-- НАЧИСЛЕНИЯ -->
+<div id="uk-billing" class="page">
+  <div class="topbar"><div><div class="pt">Начисления</div><div class="ps">Выставление квитанций жителям</div></div></div>
+  <div class="card" style="padding:24px;margin-bottom:22px">
+    <h4 style="font-size:15px;font-weight:600;margin-bottom:18px">💳 Выставить квитанцию</h4>
+    <div class="notice bl" style="margin-bottom:18px"><span>ℹ️</span><span>Выберите жителя и добавьте услуги — квитанция появится в его кабинете.</span></div>
+    <div class="inpg"><label class="inpl">Житель</label><select class="inp" id="billResident"></select></div>
+    <div class="inpg"><label class="inpl">Период</label><input class="inp" id="billPeriod" placeholder="Июнь 2026"></div>
+    <div id="billServices">
+      <div class="bill-service-row" style="display:grid;grid-template-columns:1fr 140px 40px;gap:10px;margin-bottom:10px">
+        <input class="inp" placeholder="Название услуги (напр. Холодная вода)" data-svc="name">
+        <input class="inp" type="number" placeholder="Сумма ₽" data-svc="amount">
+        <button class="btn bg2" onclick="this.parentElement.remove()" style="padding:0">✕</button>
+      </div>
+    </div>
+    <button class="btn bg2 bsm" onclick="addServiceRow()" style="margin-bottom:16px">+ Ещё услуга</button>
+    <div><button class="btn bp" onclick="issueBill()">Выставить квитанцию</button></div>
+  </div>
+  <div class="card"><div class="ch"><span class="ct">Выставленные квитанции</span></div>
+    <div id="ukBillsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+  </div>
+</div>
+
+<!-- ЗАЯВКИ УК -->
+<div id="uk-uktickets" class="page">
+  <div class="topbar"><div><div class="pt">Заявки</div><div class="ps">Обращения жителей</div></div></div>
+  <div class="hf">
+    <div class="fb active" onclick="ukFilterTickets(this,'all')">Все</div>
+    <div class="fb" onclick="ukFilterTickets(this,'new')">Новые</div>
+    <div class="fb" onclick="ukFilterTickets(this,'progress')">В работе</div>
+    <div class="fb" onclick="ukFilterTickets(this,'done')">Выполнено</div>
+  </div>
+  <div class="tl" id="ukTicketsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+</div>
+
+<!-- НАСТРОЙКИ УК -->
+<div id="uk-uksettings" class="page">
+  <div class="topbar"><div><div class="pt">Настройки УК</div><div class="ps">Данные управляющей компании</div></div></div>
+  <div class="ss" style="max-width:600px"><div class="sst">Данные компании</div>
+    <div style="padding:20px 22px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="inpg" style="margin:0"><label class="inpl">Название УК</label><input class="inp" id="ukSetName"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">ИНН</label><input class="inp" id="ukSetInn" placeholder="7700000000"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Телефон</label><input class="inp" id="ukSetPhone" placeholder="+7 (___) ___-__-__"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Email</label><input class="inp" id="ukSetEmail"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Город</label><input class="inp" id="ukSetCity" placeholder="Москва"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Район</label><input class="inp" id="ukSetDistrict" placeholder="Центральный"></div>
+      </div>
+      <button class="btn bp" style="margin-top:18px" onclick="saveUKSettings()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+</div></div>
+
+
 <!-- MODALS -->
 <div class="ov" id="payOv" onclick="if(event.target.id==='payOv')document.getElementById('payOv').classList.remove('open')"><div class="modal"><div id="payC"></div></div></div>
 <div class="ov" id="prvOv" onclick="if(event.target.id==='prvOv')document.getElementById('prvOv').classList.remove('open')"><div class="modal" style="width:480px"><div id="prvC"></div></div></div>
@@ -943,6 +1084,10 @@ async function doRegister(){
     const phone=document.getElementById('rPhone').value.trim(),pass=document.getElementById('rPass').value;
     if(!name||!email||!pass){showErr('Заполните обязательные поля');return;}
     if(pass.length<6){showErr('Пароль минимум 6 символов');return;}
+    if(_regRole==='uk_admin'){
+      const ukName=document.getElementById('rUKName').value.trim();
+      if(!ukName){showErr('Введите название управляющей компании');return;}
+    }
     const btn=document.getElementById('regBtn');btn.disabled=true;btn.textContent='Создаём аккаунт...';
     const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name,phone}}});
     btn.disabled=false;btn.textContent='Создать аккаунт';
@@ -956,15 +1101,33 @@ async function doRegister(){
       showErr(m);return;
     }
     if(data.user){
-      await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone,email});
-      await seedData(data.user.id);
-      await initApp(data.user);
+      if(_regRole==='uk_admin'){
+        // Регистрация администратора УК
+        const ukName=document.getElementById('rUKName').value.trim();
+        await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone,email,role:'uk_admin'});
+        const{data:comp}=await sb.from('companies').insert({name:ukName,phone,email,admin_id:data.user.id}).select().single();
+        if(comp&&comp.id){await sb.from('profiles').upsert({id:data.user.id,company_id:comp.id});}
+        await initApp(data.user);
+      }else{
+        // Регистрация жителя
+        await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone,email,role:'resident'});
+        await seedData(data.user.id);
+        await initApp(data.user);
+      }
     }else{showErr('Проверьте email — отправлено письмо подтверждения');}
   }catch(e){
     console.error('Register error:',e);
     showErr('Ошибка регистрации: '+e.message);
     const btn=document.getElementById('regBtn');if(btn){btn.disabled=false;btn.textContent='Создать аккаунт';}
   }
+}
+
+let _regRole='resident';
+function selectRole(role){
+  _regRole=role;
+  document.getElementById('role-resident').classList.toggle('active',role==='resident');
+  document.getElementById('role-uk').classList.toggle('active',role==='uk_admin');
+  document.getElementById('ukNameField').style.display=role==='uk_admin'?'':'none';
 }
 
 async function doLogout(){
@@ -1029,8 +1192,18 @@ async function seedData(uid){
 async function initApp(user){
   CU=user;
   document.getElementById('authPage').style.display='none';
-  document.getElementById('appPage').style.display='flex';
-  await loadAll();
+  // Загружаем профиль чтобы узнать роль
+  const{data:prof}=await sb.from('profiles').select('*').eq('id',CU.id).single();
+  UP=prof;
+  if(prof&&prof.role==='uk_admin'){
+    document.getElementById('appPage').style.display='none';
+    document.getElementById('ukPage').style.display='flex';
+    await loadUKData();
+  }else{
+    document.getElementById('appPage').style.display='flex';
+    document.getElementById('ukPage').style.display='none';
+    await loadAll();
+  }
 }
 async function loadAll(){
   await Promise.all([lPr(),lBills(),lPay(),lMet(),lTick(),lNot(),lCards()]);
@@ -1446,7 +1619,7 @@ async function createTicket(){
   const cat=document.getElementById('tCat').value,desc=document.getElementById('tDesc').value;
   if(!desc.trim()){alert('Опишите проблему');return;}
   const num='ЗВ-'+new Date().getFullYear()+'-'+Math.floor(Math.random()*9000+1000);
-  await sb.from('tickets').insert({user_id:CU.id,apartment_id:UA?.id,number:num,category:cat,description:desc,status:'new'});
+  await sb.from('tickets').insert({user_id:CU.id,apartment_id:UA?.id,company_id:UA?.company_id||null,number:num,category:cat,description:desc,status:'new'});
   await sb.from('notifications').insert({user_id:CU.id,icon:'📋',bg:'var(--pud)',text:'Заявка #'+num+' подана',read:false});
   await lTick();await lNot();renderTickets('all');renderSidebar();renderNotifs();
   document.getElementById('ntForm').style.display='none';document.getElementById('tDesc').value='';
@@ -1664,6 +1837,14 @@ async function saveApt(){
     region:document.getElementById('sReg').options[document.getElementById('sReg').selectedIndex]?.text||'',
     district:document.getElementById('sDist').options[document.getElementById('sDist').selectedIndex]?.text||''
   };
+  // Привязка к УК по названию (чтобы УК видела этого жителя)
+  try{
+    const{data:comp}=await sb.from('companies').select('id').eq('name',ukName).single();
+    if(comp&&comp.id){
+      d.company_id=comp.id;
+      await sb.from('profiles').upsert({id:CU.id,company_id:comp.id});
+    }
+  }catch(e){/* компания с таким названием не зарегистрирована — это нормально */}
   if(UA)await sb.from('apartments').update(d).eq('id',UA.id);
   else await sb.from('apartments').insert(d);
   await lPr();renderSidebar();toast('✅','Данные квартиры сохранены');
@@ -1882,6 +2063,259 @@ async function processPayment(){
   }else{
     await doConfirmAll();
   }
+}
+
+
+// ═══════════════════════════════════════════
+// ПАНЕЛЬ УПРАВЛЯЮЩЕЙ КОМПАНИИ — логика
+// ═══════════════════════════════════════════
+let UCompany=null,UHouses=[],UResidents=[],UCompBills=[],UCompTickets=[];
+
+async function loadUKData(){
+  // 1. Компания администратора
+  const{data:comp}=await sb.from('companies').select('*').eq('admin_id',CU.id).single();
+  UCompany=comp;
+  if(UCompany){
+    // 2. Дома компании
+    const{data:houses}=await sb.from('houses').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
+    UHouses=houses||[];
+    // 3. Жители компании (профили с company_id)
+    const{data:res}=await sb.from('profiles').select('*').eq('company_id',UCompany.id);
+    UResidents=(res||[]).filter(r=>r.role!=='uk_admin');
+    // 4. Квитанции компании
+    const{data:bills}=await sb.from('bills').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
+    UCompBills=bills||[];
+    // 5. Заявки компании
+    const{data:tk}=await sb.from('tickets').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
+    UCompTickets=tk||[];
+  }
+  renderUKAll();
+}
+
+function renderUKAll(){
+  const cname=UCompany?UCompany.name:'УК';
+  const ini=cname.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const av=document.getElementById('ukAva');if(av)av.textContent=ini;
+  const nm=document.getElementById('ukName');if(nm)nm.textContent=cname;
+  const wl=document.getElementById('ukWelcome');if(wl)wl.textContent=cname+' · панель управления';
+  renderUKDashboard();
+  renderUKHouses();
+  renderUKResidents();
+  renderUKBills();
+  renderUKTickets('all');
+  fillBillResident();
+  // badge
+  const openT=UCompTickets.filter(t=>t.status!=='done').length;
+  const b=document.getElementById('ukTBadge');if(b){b.textContent=openT;b.style.display=openT?'':'none';}
+}
+
+function renderUKDashboard(){
+  document.getElementById('ukStatHouses').textContent=UHouses.length;
+  document.getElementById('ukStatResidents').textContent=UResidents.length;
+  const openT=UCompTickets.filter(t=>t.status!=='done').length;
+  document.getElementById('ukStatTickets').textContent=openT;
+  const billed=UCompBills.reduce((s,b)=>s+(b.amount||0),0);
+  const paid=UCompBills.filter(b=>b.status==='paid').reduce((s,b)=>s+(b.amount||0),0);
+  const debt=billed-paid;
+  document.getElementById('ukStatBilled').textContent=fmt(billed);
+  document.getElementById('ukStatPaid').textContent=fmt(paid);
+  document.getElementById('ukStatDebt').textContent=fmt(debt);
+  // recent tickets
+  const el=document.getElementById('ukRecentTickets');
+  const recent=UCompTickets.slice(0,5);
+  if(!recent.length){el.innerHTML='<div class="emp"><div class="big">📋</div><p>Заявок пока нет</p></div>';return;}
+  const st={new:'new',progress:'progress',done:'done'};
+  const stx={new:'Новая',progress:'В работе',done:'Выполнено'};
+  el.innerHTML=recent.map(t=>{
+    const d=new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'});
+    return '<div class="br"><div class="bi m">📋</div><div class="binf"><div class="bn">'+t.category+'</div><div class="bo">#'+(t.number||'')+' · '+d+'</div></div><div class="brt"><div class="tag '+(st[t.status]||'new')+'">'+(stx[t.status]||'Новая')+'</div></div></div>';
+  }).join('');
+}
+
+function renderUKHouses(){
+  const el=document.getElementById('ukHousesList');
+  if(!UHouses.length){el.innerHTML='<div class="emp"><div class="big">🏘️</div><p>Домов пока нет. Добавьте первый дом.</p></div>';return;}
+  el.innerHTML='<div class="dg">'+UHouses.map(h=>{
+    const resCount=UResidents.filter(r=>r.company_id===UCompany.id).length;
+    return '<div class="dc" style="cursor:default"><div class="di">🏘️</div><div class="dn">'+h.address+'</div><div style="font-size:11.5px;color:var(--mu)">'+(h.city||'')+(h.district?' · '+h.district:'')+'</div><div class="dm">'+(h.floors||'—')+' эт. · '+(h.entrances||'—')+' подъезд.</div><button class="btn brd bsm" style="margin-top:8px" onclick="deleteHouse(\''+h.id+'\')">Удалить</button></div>';
+  }).join('')+'</div>';
+}
+
+function renderUKResidents(){
+  const el=document.getElementById('ukResidentsList');
+  document.getElementById('ukResCount').textContent=UResidents.length+' чел.';
+  if(!UResidents.length){el.innerHTML='<div class="emp"><div class="big">👥</div><p>Жителей пока нет.<br>Они появятся когда зарегистрируются и выберут вашу УК.</p></div>';return;}
+  el.innerHTML=UResidents.map(r=>{
+    const ini=(r.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return '<div class="br" style="cursor:default"><div class="ava">'+ini+'</div><div class="binf"><div class="bn">'+(r.full_name||'Без имени')+'</div><div class="bo">'+(r.email||'')+(r.phone?' · '+r.phone:'')+'</div></div></div>';
+  }).join('');
+}
+
+function renderUKBills(){
+  const el=document.getElementById('ukBillsList');
+  if(!UCompBills.length){el.innerHTML='<div class="emp"><div class="big">💳</div><p>Квитанции ещё не выставлены</p></div>';return;}
+  el.innerHTML=UCompBills.slice(0,40).map(b=>{
+    const res=UResidents.find(r=>r.id===b.user_id);
+    const who=res?res.full_name:'житель';
+    return '<div class="br" style="cursor:default"><div class="bi '+(b.status==='paid'?'m':'hw')+'">'+(b.icon||'💳')+'</div><div class="binf"><div class="bn">'+b.name+' — '+(b.period||'')+'</div><div class="bo">'+who+'</div></div><div class="brt"><div class="bsum">'+fmt(b.amount)+'</div><div class="tag '+(b.status==='paid'?'paid':'unpaid')+'" style="margin-top:3px">'+(b.status==='paid'?'Оплачено':'Не оплачено')+'</div></div></div>';
+  }).join('');
+}
+
+function renderUKTickets(filter){
+  const el=document.getElementById('ukTicketsList');
+  const show=(filter&&filter!=='all')?UCompTickets.filter(t=>t.status===filter):UCompTickets;
+  if(!show.length){el.innerHTML='<div class="emp"><div class="big">📋</div><p>Заявок нет</p></div>';return;}
+  const stx={new:'Новая',progress:'В работе',done:'Выполнено'};
+  const stc={new:'new',progress:'progress',done:'done'};
+  el.innerHTML=show.map(t=>{
+    const d=new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'});
+    const res=UResidents.find(r=>r.id===t.user_id);
+    const who=res?res.full_name:'житель';
+    let actions='';
+    if(t.status==='new')actions='<button class="btn bp bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'progress\')">Принять в работу</button>';
+    else if(t.status==='progress')actions='<button class="btn bp bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'done\')">Отметить выполненной</button>';
+    else actions='<span class="tag done">✓ Завершена</span>';
+    return '<div class="tc"><div class="tt"><div><div class="tti">'+t.category+'</div><div class="tnum">#'+(t.number||'')+' · '+who+'</div></div><div class="tag '+(stc[t.status]||'new')+'">'+(stx[t.status]||'Новая')+'</div></div><div class="tdesc">'+(t.description||'')+'</div><div class="tmeta"><span>📅 '+d+'</span></div><div style="margin-top:12px">'+actions+'</div></div>';
+  }).join('');
+}
+
+function ukFilterTickets(el,status){
+  el.closest('.hf').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderUKTickets(status);
+}
+
+async function ukSetTicketStatus(id,status){
+  const upd={status};
+  if(status==='progress')upd.master='Назначен мастер';
+  await sb.from('tickets').update(upd).eq('id',id);
+  // уведомление жителю
+  const t=UCompTickets.find(x=>x.id===id);
+  if(t){
+    const txt=status==='progress'?'Заявка #'+t.number+' принята в работу':'Заявка #'+t.number+' выполнена';
+    await sb.from('notifications').insert({user_id:t.user_id,icon:'📋',bg:'var(--pud)',text:txt,read:false});
+  }
+  await loadUKData();
+  toast('✅','Статус заявки обновлён');
+}
+
+// ── ДОМА ──
+async function addHouse(){
+  const addr=document.getElementById('hAddr').value.trim();
+  if(!addr){alert('Введите адрес дома');return;}
+  if(!UCompany){alert('Компания не найдена');return;}
+  await sb.from('houses').insert({
+    company_id:UCompany.id,
+    address:addr,
+    city:document.getElementById('hCity').value.trim(),
+    floors:parseInt(document.getElementById('hFloors').value)||null,
+    entrances:parseInt(document.getElementById('hEntr').value)||null
+  });
+  ['hAddr','hCity','hFloors','hEntr'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addHouseForm').style.display='none';
+  await loadUKData();
+  toast('🏘️','Дом добавлен');
+}
+
+async function deleteHouse(id){
+  if(!confirm('Удалить этот дом?'))return;
+  await sb.from('houses').delete().eq('id',id);
+  await loadUKData();
+  toast('🗑️','Дом удалён');
+}
+
+// ── НАЧИСЛЕНИЯ ──
+function fillBillResident(){
+  const sel=document.getElementById('billResident');
+  if(!sel)return;
+  if(!UResidents.length){sel.innerHTML='<option value="">Нет жителей</option>';return;}
+  sel.innerHTML=UResidents.map(r=>'<option value="'+r.id+'">'+(r.full_name||r.email)+'</option>').join('');
+}
+
+function addServiceRow(){
+  const wrap=document.getElementById('billServices');
+  const row=document.createElement('div');
+  row.className='bill-service-row';
+  row.style.cssText='display:grid;grid-template-columns:1fr 140px 40px;gap:10px;margin-bottom:10px';
+  row.innerHTML='<input class="inp" placeholder="Название услуги" data-svc="name"><input class="inp" type="number" placeholder="Сумма ₽" data-svc="amount"><button class="btn bg2" onclick="this.parentElement.remove()" style="padding:0">✕</button>';
+  wrap.appendChild(row);
+}
+
+async function issueBill(){
+  const userId=document.getElementById('billResident').value;
+  const period=document.getElementById('billPeriod').value.trim();
+  if(!userId){alert('Выберите жителя');return;}
+  if(!period){alert('Укажите период (напр. Июнь 2026)');return;}
+  const rows=document.querySelectorAll('#billServices .bill-service-row');
+  const services=[];
+  rows.forEach(r=>{
+    const name=r.querySelector('[data-svc="name"]').value.trim();
+    const amount=parseFloat(r.querySelector('[data-svc="amount"]').value);
+    if(name&&amount>0)services.push({name,amount});
+  });
+  if(!services.length){alert('Добавьте хотя бы одну услугу с суммой');return;}
+  // находим квартиру жителя
+  const{data:apt}=await sb.from('apartments').select('id').eq('user_id',userId).single();
+  const iconMap={'Холодная вода':'💧','Горячая вода':'🌡️','Электроэнергия':'⚡','Отопление':'🔥','Управление домом':'🏢'};
+  for(const s of services){
+    await sb.from('bills').insert({
+      user_id:userId,
+      apartment_id:apt?apt.id:null,
+      company_id:UCompany.id,
+      name:s.name,
+      amount:s.amount,
+      icon:iconMap[s.name]||'📄',
+      org:UCompany.name,
+      period,
+      status:'unpaid',
+      due_date:null
+    });
+  }
+  // уведомление жителю
+  await sb.from('notifications').insert({user_id:userId,icon:'💳',bg:'var(--ord)',text:'Выставлены новые квитанции за '+period,read:false});
+  // очистка формы
+  document.getElementById('billPeriod').value='';
+  document.getElementById('billServices').innerHTML='<div class="bill-service-row" style="display:grid;grid-template-columns:1fr 140px 40px;gap:10px;margin-bottom:10px"><input class="inp" placeholder="Название услуги (напр. Холодная вода)" data-svc="name"><input class="inp" type="number" placeholder="Сумма ₽" data-svc="amount"><button class="btn bg2" onclick="this.parentElement.remove()" style="padding:0">✕</button></div>';
+  await loadUKData();
+  toast('✅','Квитанция выставлена жителю');
+}
+
+// ── НАСТРОЙКИ УК ──
+function fillUKSettings(){
+  if(!UCompany)return;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
+  set('ukSetName',UCompany.name);
+  set('ukSetInn',UCompany.inn);
+  set('ukSetPhone',UCompany.phone);
+  set('ukSetEmail',UCompany.email);
+  set('ukSetCity',UCompany.city);
+  set('ukSetDistrict',UCompany.district);
+}
+
+async function saveUKSettings(){
+  if(!UCompany){alert('Компания не найдена');return;}
+  const g=id=>document.getElementById(id).value.trim();
+  await sb.from('companies').update({
+    name:g('ukSetName'),inn:g('ukSetInn'),phone:g('ukSetPhone'),
+    email:g('ukSetEmail'),city:g('ukSetCity'),district:g('ukSetDistrict')
+  }).eq('id',UCompany.id);
+  await loadUKData();
+  toast('✅','Данные УК сохранены');
+}
+
+// ── НАВИГАЦИЯ УК ──
+function ukGoto(page,el){
+  document.querySelectorAll('#ukPage .page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('uk-'+page);
+  if(pg)pg.classList.add('active');
+  document.querySelectorAll('#ukSidebar .ni').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  else document.querySelectorAll('#ukSidebar .ni').forEach(i=>{if((i.getAttribute('onclick')||'').includes("'"+page+"'"))i.classList.add('active');});
+  window.scrollTo(0,0);
+  if(page==='uksettings')fillUKSettings();
+  // закрыть моб. меню
+  document.getElementById('ukSidebar').classList.remove('open');
+  const bd=document.getElementById('ukBackdrop');if(bd)bd.classList.remove('open');
 }
 
 
