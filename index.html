@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1847 ZAHOD1 realtime+clean -->
+<!-- VERSION v1906 ZAHOD1-4 complete -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -228,6 +228,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 .spin{width:20px;height:20px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .emp{text-align:center;padding:48px 24px;color:var(--mu)}.emp .big{font-size:48px;margin-bottom:12px}.emp p{font-size:14px}
+.notif-toast{max-width:340px}
 .toast{position:fixed;bottom:28px;right:28px;background:var(--sf);border:1px solid var(--gr);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px var(--sh);z-index:400;font-size:13px;animation:su .3s ease;max-width:320px}
 .toast.hide{opacity:0;transform:translateY(20px);transition:all .3s}
 @keyframes su{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -395,7 +396,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
       <div id="regForm" style="display:none">
         <div class="ig"><label class="il">Полное ФИО</label><input class="if" type="text" id="rName" placeholder="Иванов Иван Иванович"></div>
         <div class="ig"><label class="il">Email</label><input class="if" type="email" id="rEmail" placeholder="example@mail.ru"></div>
-        <div class="ig"><label class="il">Телефон</label><input class="if" type="tel" id="rPhone" placeholder="+7 (___) ___-__-__"></div>
+        <div class="ig"><label class="il">Телефон</label><input class="if" type="tel" id="rPhone" placeholder="+7 (___) ___-__-__" oninput="formatPhone(this)"></div>
         <div class="ig"><label class="il">Пароль (мин. 6 символов)</label><input class="if" type="password" id="rPass" placeholder="••••••••"></div>
         <div class="ig"><label class="il">Я регистрируюсь как</label>
           <div style="display:flex;gap:8px">
@@ -552,12 +553,8 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 <!-- NEWS -->
 <div id="page-news" class="page">
   <div id="nLV">
-    <div class="topbar"><div><div class="pt">Новости дома</div><div class="ps">Объявления и события</div></div></div>
-    <div class="news-list">
-      <div class="nc2" onclick="openArt(0)"><div class="ntop"><div class="ncat warn">Объявление</div><div class="ndate">3 июня 2026</div></div><div class="ntit">Отключение горячей воды 10–15 июня</div><div class="ntxt">В связи с плановой заменой трубопроводов горячая вода будет отключена...</div><div class="nfoot"><span>👁 142</span><span>💬 <span id="nc0">3</span></span></div></div>
-      <div class="nc2" onclick="openArt(1)"><div class="ntop"><div class="ncat event">Мероприятие</div><div class="ndate">28 мая 2026</div></div><div class="ntit">Общее собрание жителей — 15 июня в 19:00</div><div class="ntxt">Приглашаем на ежегодное общее собрание. Повестка: отчёт УК, план ремонта...</div><div class="nfoot"><span>👁 89</span><span>💬 <span id="nc1">5</span></span></div></div>
-      <div class="nc2" onclick="openArt(2)"><div class="ntop"><div class="ncat info">Информация</div><div class="ndate">20 мая 2026</div></div><div class="ntit">Завершён ремонт подъезда №2</div><div class="ntxt">Покраска стен, LED-освещение, новые почтовые ящики...</div><div class="nfoot"><span>👁 201</span><span>💬 <span id="nc2">8</span></span></div></div>
-    </div>
+    <div class="topbar"><div><div class="pt">Новости дома</div><div class="ps">Объявления и события от вашей УК</div></div></div>
+    <div class="news-list" id="newsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
   </div>
   <div id="nAV" style="display:none">
     <div class="nback" onclick="closeArt()">← Назад к новостям</div>
@@ -623,7 +620,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
               <div class="inpg" style="margin:0"><label class="inpl">Полное ФИО</label><input class="inp" id="stNameI" placeholder="Иванов Иван Иванович"></div>
-              <div class="inpg" style="margin:0"><label class="inpl">Телефон</label><input class="inp" id="stPhone" placeholder="+7 (___) ___-__-__"></div>
+              <div class="inpg" style="margin:0"><label class="inpl">Телефон</label><input class="inp" id="stPhone" placeholder="+7 (___) ___-__-__" oninput="formatPhone(this)"></div>
             </div>
             <button class="btn bp" style="margin-top:18px" onclick="saveProfile()">Сохранить изменения</button>
           </div>
@@ -643,11 +640,23 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
                   <option value="nsk">Новосибирская область</option>
                   <option value="kzn">Республика Татарстан</option>
                   <option value="krd">Краснодарский край</option>
+                  <option value="nnov">Нижегородская область</option>
+                  <option value="sam">Самарская область</option>
+                  <option value="chel">Челябинская область</option>
+                  <option value="ros">Ростовская область</option>
+                  <option value="bash">Республика Башкортостан</option>
+                  <option value="perm">Пермский край</option>
+                  <option value="vrn">Воронежская область</option>
+                  <option value="volg">Волгоградская область</option>
+                  <option value="krsk">Красноярский край</option>
                   <option value="other">Другой регион</option>
                 </select>
+                <input class="inp" id="sRegManual" placeholder="или впишите регион вручную" style="margin-top:8px">
               </div>
-              <div class="inpg" style="margin:0"><label class="inpl">Город</label><select class="inp" id="sCity" onchange="updateDistricts()"></select></div>
-              <div class="inpg" style="margin:0"><label class="inpl">Район</label><select class="inp" id="sDist" onchange="updateUK()"></select></div>
+              <div class="inpg" style="margin:0"><label class="inpl">Город</label><select class="inp" id="sCity" onchange="updateDistricts()"></select>
+                <input class="inp" id="sCityManual" placeholder="или впишите город вручную" style="margin-top:8px"></div>
+              <div class="inpg" style="margin:0"><label class="inpl">Район</label><select class="inp" id="sDist" onchange="updateUK()"></select>
+                <input class="inp" id="sDistManual" placeholder="или впишите район вручную" style="margin-top:8px"></div>
               <div class="inpg" style="margin:0"><label class="inpl">Управляющая компания</label><select class="inp" id="sUK" onchange="updateUKInfo()"></select></div>
               <div class="inpg" style="margin:0"><label class="inpl">Или введите УК вручную</label><input class="inp" id="sUKManual" placeholder="Название вашей УК"></div>
               <div class="inpg" style="margin:0"><label class="inpl">Улица и дом</label><input class="inp" id="sAddr" placeholder="ул. Садовая, 12"></div>
@@ -663,6 +672,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
       <!-- NOTIF -->
       <div class="sp" id="sp-notif">
         <div class="ss"><div class="sst">Push-уведомления</div>
+          <div class="sr"><div><div class="srl">🔊 Звук уведомлений</div><div class="srd">Звуковой сигнал при новых уведомлениях</div></div><label class="tog"><input type="checkbox" id="soundToggle" checked onchange="toggleSound(this)"><span class="togs"></span></label></div>
           <div class="sr"><div><div class="srl">Новые квитанции</div></div><label class="tog"><input type="checkbox" checked><span class="togs"></span></label></div>
           <div class="sr"><div><div class="srl">Напоминание об оплате</div><div class="srd">За 5 дней до срока</div></div><label class="tog"><input type="checkbox" checked><span class="togs"></span></label></div>
           <div class="sr"><div><div class="srl">Статус заявок</div></div><label class="tog"><input type="checkbox" checked><span class="togs"></span></label></div>
@@ -732,6 +742,8 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   <div class="ni" onclick="ukGoto('residents',this)"><span class="ico">👥</span>Жители</div>
   <div class="ni" onclick="ukGoto('billing',this)"><span class="ico">💳</span>Начисления</div>
   <div class="ni" onclick="ukGoto('uktickets',this)"><span class="ico">📋</span>Заявки<span class="nb" id="ukTBadge" style="display:none">0</span></div>
+  <div class="ni" onclick="ukGoto('uknews',this)"><span class="ico">📢</span>Новости</div>
+  <div class="ni" onclick="ukGoto('ukchat',this)"><span class="ico">💬</span>Чат с жителями<span class="nb" id="ukChatBadge" style="display:none">0</span></div>
   <div class="nl">Аккаунт</div>
   <div class="ni" onclick="ukGoto('uksettings',this)"><span class="ico">⚙️</span>Настройки УК</div>
   <div class="sb-bot">
@@ -781,8 +793,21 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   <div id="addHouseForm" style="display:none;background:var(--sf);border:1px solid var(--bd);border-radius:var(--ra);padding:24px;margin-bottom:22px">
     <h4 style="font-size:15px;font-weight:600;margin-bottom:18px">🏘️ Новый дом</h4>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div class="inpg" style="margin:0"><label class="inpl">Адрес (улица, дом)</label><input class="inp" id="hAddr" placeholder="ул. Садовая, 12"></div>
+      <div class="inpg" style="margin:0"><label class="inpl">Регион</label>
+        <select class="inp" id="hReg">
+          <option value="">— Выберите регион —</option>
+          <option>Москва и МО</option><option>Санкт-Петербург и ЛО</option><option>Свердловская область</option>
+          <option>Новосибирская область</option><option>Республика Татарстан</option><option>Краснодарский край</option>
+          <option>Нижегородская область</option><option>Самарская область</option><option>Челябинская область</option>
+          <option>Ростовская область</option><option>Республика Башкортостан</option><option>Пермский край</option>
+          <option>Воронежская область</option><option>Волгоградская область</option><option>Красноярский край</option>
+          <option value="other">Другой регион</option>
+        </select>
+        <input class="inp" id="hRegManual" placeholder="или впишите регион" style="margin-top:8px">
+      </div>
       <div class="inpg" style="margin:0"><label class="inpl">Город</label><input class="inp" id="hCity" placeholder="Москва"></div>
+      <div class="inpg" style="margin:0"><label class="inpl">Район</label><input class="inp" id="hDist" placeholder="Центральный"></div>
+      <div class="inpg" style="margin:0"><label class="inpl">Адрес (улица, дом)</label><input class="inp" id="hAddr" placeholder="ул. Садовая, 12"></div>
       <div class="inpg" style="margin:0"><label class="inpl">Этажей</label><input class="inp" type="number" id="hFloors" placeholder="9"></div>
       <div class="inpg" style="margin:0"><label class="inpl">Подъездов</label><input class="inp" type="number" id="hEntr" placeholder="4"></div>
     </div>
@@ -794,6 +819,9 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 <!-- ЖИТЕЛИ -->
 <div id="uk-residents" class="page">
   <div class="topbar"><div><div class="pt">Жители</div><div class="ps">Жители домов вашей УК</div></div></div>
+  <div class="inpg" style="max-width:340px"><label class="inpl">Фильтр по дому</label>
+    <select class="inp" id="ukResHouseFilter" onchange="renderUKResidents()"><option value="">Все дома</option></select>
+  </div>
   <div class="card"><div class="ch"><span class="ct">Список жителей</span><span class="ca" id="ukResCount"></span></div>
     <div id="ukResidentsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
   </div>
@@ -806,11 +834,18 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
     <h4 style="font-size:15px;font-weight:600;margin-bottom:18px">💳 Выставить квитанцию</h4>
     <div class="notice bl" style="margin-bottom:18px"><span>ℹ️</span><span>Выберите жителя и добавьте услуги — квитанция появится в его кабинете.</span></div>
     <div class="inpg"><label class="inpl">Житель</label><select class="inp" id="billResident"></select></div>
-    <div class="inpg"><label class="inpl">Период</label><input class="inp" id="billPeriod" placeholder="Июнь 2026"></div>
+    <div class="inpg"><label class="inpl">Период</label><select class="inp" id="billPeriod"></select></div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:8px">Услуги</div>
     <div id="billServices">
       <div class="bill-service-row" style="display:grid;grid-template-columns:1fr 140px 40px;gap:10px;margin-bottom:10px">
-        <input class="inp" placeholder="Название услуги (напр. Холодная вода)" data-svc="name">
-        <input class="inp" type="number" placeholder="Сумма ₽" data-svc="amount">
+        <select class="inp" data-svc="name">
+          <option value="">— Выберите услугу —</option>
+          <option>Холодная вода</option><option>Горячая вода</option><option>Электроэнергия</option>
+          <option>Отопление</option><option>Газоснабжение</option><option>Водоотведение</option>
+          <option>Управление домом</option><option>Содержание жилья</option><option>Капитальный ремонт</option>
+          <option>Вывоз мусора</option><option>Домофон</option><option>Лифт</option>
+        </select>
+        <input class="inp" type="number" min="0" max="100000" step="0.01" placeholder="Сумма ₽" data-svc="amount" oninput="checkAmount(this)">
         <button class="btn bg2" onclick="this.parentElement.remove()" style="padding:0">✕</button>
       </div>
     </div>
@@ -834,6 +869,44 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   <div class="tl" id="ukTicketsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
 </div>
 
+<!-- ЧАТ УК С ЖИТЕЛЯМИ -->
+<div id="uk-ukchat" class="page">
+  <div class="topbar"><div><div class="pt">Чат с жителями</div><div class="ps">Обращения жителей в поддержку</div></div></div>
+  <div class="cw">
+    <div class="csp">
+      <div class="csph">Диалоги</div>
+      <div id="ukChatThreads"><div style="padding:16px;font-size:13px;color:var(--mu)">Нет обращений</div></div>
+    </div>
+    <div class="cm">
+      <div class="cmh"><div class="cst"></div><div><div style="font-size:14px;font-weight:600" id="ukChatPartner">Выберите диалог</div><div style="font-size:11px;color:var(--mu)" id="ukChatAddr"></div></div></div>
+      <div class="cms" id="ukChatMsgs"><div class="emp"><div class="big">💬</div><p>Выберите житель слева чтобы открыть переписку</p></div></div>
+      <div class="cia" id="ukChatInputArea" style="display:none">
+        <textarea class="cinp" id="ukChatInp" rows="1" placeholder="Ответить жителю..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ukSendMsg();}"></textarea>
+        <button class="csend" onclick="ukSendMsg()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- НОВОСТИ УК -->
+<div id="uk-uknews" class="page">
+  <div class="topbar"><div><div class="pt">Новости дома</div><div class="ps">Публикация объявлений для жителей</div></div><button class="btn bp bsm" onclick="document.getElementById('addNewsForm').style.display='block'">+ Опубликовать</button></div>
+  <div id="addNewsForm" style="display:none;background:var(--sf);border:1px solid var(--bd);border-radius:var(--ra);padding:24px;margin-bottom:22px">
+    <h4 style="font-size:15px;font-weight:600;margin-bottom:18px">📢 Новое объявление</h4>
+    <div class="inpg"><label class="inpl">Категория</label>
+      <select class="inp" id="newsCat">
+        <option value="info">ℹ️ Информация</option>
+        <option value="warn">⚠️ Объявление (важное)</option>
+        <option value="event">📅 Мероприятие</option>
+      </select>
+    </div>
+    <div class="inpg"><label class="inpl">Заголовок</label><input class="inp" id="newsTitle" placeholder="Напр. Отключение горячей воды 10–15 июня"></div>
+    <div class="inpg"><label class="inpl">Текст объявления</label><textarea class="inp" id="newsBody" placeholder="Подробное описание..." style="min-height:120px"></textarea></div>
+    <div style="display:flex;gap:10px"><button class="btn bp" onclick="publishNews()">Опубликовать</button><button class="btn bg2" onclick="document.getElementById('addNewsForm').style.display='none'">Отмена</button></div>
+  </div>
+  <div id="ukNewsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+</div>
+
 <!-- НАСТРОЙКИ УК -->
 <div id="uk-uksettings" class="page">
   <div class="topbar"><div><div class="pt">Настройки УК</div><div class="ps">Данные управляющей компании</div></div></div>
@@ -844,6 +917,17 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
         <div class="inpg" style="margin:0"><label class="inpl">ИНН</label><input class="inp" id="ukSetInn" placeholder="7700000000"></div>
         <div class="inpg" style="margin:0"><label class="inpl">Телефон</label><input class="inp" id="ukSetPhone" placeholder="+7 (___) ___-__-__"></div>
         <div class="inpg" style="margin:0"><label class="inpl">Email</label><input class="inp" id="ukSetEmail"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Регион</label>
+          <select class="inp" id="ukSetReg">
+            <option value="">— Выберите регион —</option>
+            <option>Москва и МО</option><option>Санкт-Петербург и ЛО</option><option>Свердловская область</option>
+            <option>Новосибирская область</option><option>Республика Татарстан</option><option>Краснодарский край</option>
+            <option>Нижегородская область</option><option>Самарская область</option><option>Челябинская область</option>
+            <option>Ростовская область</option><option>Республика Башкортостан</option><option>Пермский край</option>
+            <option>Воронежская область</option><option>Волгоградская область</option><option>Красноярский край</option>
+            <option value="other">Другой регион</option>
+          </select>
+          <input class="inp" id="ukSetRegManual" placeholder="или впишите регион" style="margin-top:8px"></div>
         <div class="inpg" style="margin:0"><label class="inpl">Город</label><input class="inp" id="ukSetCity" placeholder="Москва"></div>
         <div class="inpg" style="margin:0"><label class="inpl">Район</label><input class="inp" id="ukSetDistrict" placeholder="Центральный"></div>
       </div>
@@ -972,17 +1056,7 @@ const sb={
 let CU=null,UP=null,UA=null,UB=[],UPay=[],UM=[],UT=[],UN=[],CA=0,chatMode='uk';
 let savedPDFs=[];
 
-const arts=[
-  {cat:'warn',ct:'Объявление',title:'Отключение горячей воды 10–15 июня',date:'3 июня 2026',views:142,
-   text:'Уважаемые жители!\n\nВ связи с плановой заменой магистральных трубопроводов с 10 по 15 июня будет отсутствовать горячая вода.\n\nХолодная вода и отопление работают штатно.',
-   coms:[{a:'Мария К.',av:'МК',cl:'#6366f1',t:'Спасибо за предупреждение!',d:'3 июня'},{a:'УК Комфорт',av:'УК',cl:'#4f8ef7',t:'Работы завершатся строго в срок.',d:'4 июня'},{a:'Алексей Н.',av:'АН',cl:'#10b981',t:'Когда точно включат воду?',d:'4 июня'}]},
-  {cat:'event',ct:'Мероприятие',title:'Общее собрание жителей — 15 июня в 19:00',date:'28 мая 2026',views:89,
-   text:'Уважаемые жители!\n\nПриглашаем на ежегодное общее собрание собственников.\n\nПовестка:\n1. Отчёт УК за 2025 год\n2. Утверждение плана ремонта\n3. Выборы совета дома\n\nМесто: актовый зал 1-го этажа.',
-   coms:[{a:'Ирина В.',av:'ИВ',cl:'#f59e42',t:'Обязательно приду!',d:'29 мая'},{a:'УК Комфорт',av:'УК',cl:'#4f8ef7',t:'Также будет онлайн-трансляция.',d:'30 мая'},{a:'Дмитрий К.',av:'ДК',cl:'#a78bfa',t:'Пришлите ссылку пожалуйста.',d:'30 мая'},{a:'УК Комфорт',av:'УК',cl:'#4f8ef7',t:'Дмитрий, пришлём за день.',d:'31 мая'},{a:'Нина С.',av:'НС',cl:'#f87171',t:'Спасибо за организацию!',d:'1 июня'}]},
-  {cat:'info',ct:'Информация',title:'Завершён ремонт подъезда №2',date:'20 мая 2026',views:201,
-   text:'Уважаемые жители!\n\nРемонт подъезда №2 завершён в срок.\n\nВыполнено:\n• Покраска стен и потолков\n• Замена освещения на LED с датчиками движения\n• Установка новых почтовых ящиков\n• Ремонт напольного покрытия',
-   coms:[{a:'Татьяна М.',av:'ТМ',cl:'#10b981',t:'Очень красиво, спасибо!',d:'20 мая'},{a:'Виктор З.',av:'ВЗ',cl:'#6366f1',t:'Молодцы!',d:'21 мая'},{a:'Лена Ф.',av:'ЛФ',cl:'#f59e42',t:'Светильники понравились!',d:'22 мая'},{a:'УК Комфорт',av:'УК',cl:'#4f8ef7',t:'Включим в план ремонта №3.',d:'23 мая'},{a:'Надя С.',av:'НС',cl:'#f87171',t:'Жду своего подъезда!',d:'24 мая'},{a:'Андрей К.',av:'АК',cl:'#34d399',t:'Чисто и быстро, молодцы!',d:'25 мая'},{a:'Оля Т.',av:'ОТ',cl:'#6366f1',t:'Спасибо команде!',d:'26 мая'},{a:'Коля Р.',av:'КР',cl:'#a78bfa',t:'Когда наш подъезд?',d:'27 мая'}]}
-];
+let UNews=[];let _curNews=null;
 
 // GEO DATABASE
 const geo={
@@ -992,6 +1066,15 @@ const geo={
   nsk:{cities:{nsk:{name:'Новосибирск',d:{dzm:'Дзержинский',zav:'Заводской',zab:'Заельцовский',kali:'Калининский',kir:'Кировский',len:'Ленинский',lev:'Левобережный',mash:'Первомайский',okt:'Октябрьский',sov:'Советский',cen:'Центральный'}},berd:{name:'Бердск',d:{berd_cen:'Центральный'}}}},
   kzn:{cities:{kzn:{name:'Казань',d:{av:'Авиастроительный',vakh:'Вахитовский',mos:'Московский',niz:'Ново-Савиновский',pri:'Приволжский',sov:'Советский'}},naberezhnye:{name:'Набережные Челны',d:{nch_cen:'Центральный',nch_avt:'Автозаводский'}}}},
   krd:{cities:{krd:{name:'Краснодар',d:{cen:'Центральный',kar:'Карасунский',elm:'Елизаветинский',prib:'Прикубанский'}},sochi:{name:'Сочи',d:{cen:'Центральный',adl:'Адлерский',hoss:'Хостинский',laz:'Лазаревский'}}}},
+  nnov:{cities:{nnov:{name:'Нижний Новгород',d:{avt:'Автозаводский',kan:'Канавинский',len:'Ленинский',mosk:'Московский',nizh:'Нижегородский',prio:'Приокский',sov:'Советский',sorm:'Сормовский'}},dzer:{name:'Дзержинск',d:{dz_cen:'Центральный'}}}},
+  sam:{cities:{sam:{name:'Самара',d:{zhel:'Железнодорожный',kir:'Кировский',kras:'Красноглинский',kuib:'Куйбышевский',len:'Ленинский',okt:'Октябрьский',prom:'Промышленный',sam_sov:'Советский',sam_sam:'Самарский'}},tlt:{name:'Тольятти',d:{tlt_avt:'Автозаводский',tlt_cen:'Центральный',tlt_kom:'Комсомольский'}}}},
+  chel:{cities:{chel:{name:'Челябинск',d:{ch_kal:'Калининский',ch_kur:'Курчатовский',ch_len:'Ленинский',ch_met:'Металлургический',ch_sov:'Советский',ch_cen:'Центральный',ch_trk:'Тракторозаводский'}},mgn:{name:'Магнитогорск',d:{mgn_len:'Ленинский',mgn_pra:'Правобережный',mgn_ord:'Орджоникидзевский'}}}},
+  ros:{cities:{rnd:{name:'Ростов-на-Дону',d:{rnd_vor:'Ворошиловский',rnd_zhel:'Железнодорожный',rnd_kir:'Кировский',rnd_len:'Ленинский',rnd_okt:'Октябрьский',rnd_per:'Первомайский',rnd_pro:'Пролетарский',rnd_sov:'Советский'}},tag:{name:'Таганрог',d:{tag_cen:'Центральный'}}}},
+  bash:{cities:{ufa:{name:'Уфа',d:{ufa_dem:'Дёмский',ufa_kal:'Калининский',ufa_kir:'Кировский',ufa_len:'Ленинский',ufa_okt:'Октябрьский',ufa_ord:'Орджоникидзевский',ufa_sov:'Советский'}},ster:{name:'Стерлитамак',d:{ster_cen:'Центральный'}}}},
+  perm:{cities:{perm:{name:'Пермь',d:{pm_dzr:'Дзержинский',pm_ind:'Индустриальный',pm_kir:'Кировский',pm_len:'Ленинский',pm_mot:'Мотовилихинский',pm_ord:'Орджоникидзевский',pm_sver:'Свердловский'}}}},
+  vrn:{cities:{vrn:{name:'Воронеж',d:{vr_zhel:'Железнодорожный',vr_kom:'Коминтерновский',vr_len:'Ленинский',vr_lev:'Левобережный',vr_sov:'Советский',vr_cen:'Центральный'}}}},
+  volg:{cities:{volg:{name:'Волгоград',d:{vg_vor:'Ворошиловский',vg_dzr:'Дзержинский',vg_kir:'Кировский',vg_kr:'Краснооктябрьский',vg_sov:'Советский',vg_cen:'Центральный',vg_tr:'Тракторозаводский'}}}},
+  krsk:{cities:{krsk:{name:'Красноярск',d:{kr_zhel:'Железнодорожный',kr_kir:'Кировский',kr_len:'Ленинский',kr_okt:'Октябрьский',kr_sver:'Свердловский',kr_sov:'Советский',kr_cen:'Центральный'}}}},
   other:{cities:{other:{name:'Другой город',d:{other:'Другой район'}}}}
 };
 
@@ -1173,6 +1256,7 @@ async function initApp(user){
 async function loadAll(){
   await Promise.all([lPr(),lBills(),lPay(),lMet(),lTick(),lNot(),lCards()]);
   renderHome();renderSidebar();
+  await lNews();
   startPolling();
 }
 async function lPr(){
@@ -1713,30 +1797,64 @@ function previewArc(idx){
 }
 
 // ── NEWS ──
-function openArt(i){
-  CA=i;const a=arts[i];
+async function lNews(){
+  if(!UA||!UA.company_id){UNews=[];renderNewsList();return;}
+  const{data}=await sb.from('news').select('*').eq('company_id',UA.company_id).order('created_at',{ascending:false});
+  UNews=data||[];
+  renderNewsList();
+}
+
+function renderNewsList(){
+  const el=document.getElementById('newsList');
+  if(!el)return;
+  if(!UNews.length){
+    el.innerHTML='<div class="emp"><div class="big">📢</div><p>Пока нет новостей.<br>Здесь появятся объявления от вашей управляющей компании.</p></div>';
+    return;
+  }
+  const catName={info:'Информация',warn:'Объявление',event:'Мероприятие'};
+  el.innerHTML=UNews.map((n,i)=>{
+    const d=new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
+    const preview=(n.body||'').slice(0,90)+((n.body||'').length>90?'...':'');
+    return '<div class="nc2" onclick="openArt('+i+')"><div class="ntop"><div class="ncat '+(n.category||'info')+'">'+(catName[n.category]||'Информация')+'</div><div class="ndate">'+d+'</div></div><div class="ntit">'+n.title+'</div><div class="ntxt">'+preview+'</div><div class="nfoot"><span>👁 '+(n.views||0)+'</span></div></div>';
+  }).join('');
+}
+
+async function openArt(i){
+  const n=UNews[i];if(!n)return;
+  _curNews=n;
   document.getElementById('nLV').style.display='none';
   document.getElementById('nAV').style.display='block';
-  const ce=document.getElementById('aCat');ce.textContent=a.ct;ce.className='ncat '+a.cat;
-  document.getElementById('aTit').textContent=a.title;
-  document.getElementById('aDt').textContent=a.date;
-  document.getElementById('aVw').textContent=a.views;
-  document.getElementById('aTxt').innerHTML=a.text.replace(/\n/g,'<br>');
-  renderComs(i);
+  const catName={info:'Информация',warn:'Объявление',event:'Мероприятие'};
+  const ce=document.getElementById('aCat');ce.textContent=catName[n.category]||'Информация';ce.className='ncat '+(n.category||'info');
+  document.getElementById('aTit').textContent=n.title;
+  document.getElementById('aDt').textContent=new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('aVw').textContent=(n.views||0);
+  document.getElementById('aTxt').innerHTML=(n.body||'').replace(/\n/g,'<br>');
+  // увеличиваем просмотры
+  try{await sb.from('news').update({views:(n.views||0)+1}).eq('id',n.id);}catch(e){}
+  await loadComments(n.id);
 }
+
 function closeArt(){document.getElementById('nLV').style.display='';document.getElementById('nAV').style.display='none';}
-function renderComs(i){
-  const c=arts[i].coms;
-  document.getElementById('cCnt').textContent=c.length;
-  const nc=document.getElementById('nc'+i);if(nc)nc.textContent=c.length;
-  document.getElementById('cList').innerHTML=c.map(cm=>`<div class="ci"><div class="ch2"><div class="cava" style="background:${cm.cl}">${cm.av}</div><div class="cauth">${cm.a}</div><div class="cdate">${cm.d}</div></div><div class="ctxt">${cm.t}</div></div>`).join('');
+
+async function loadComments(newsId){
+  const{data}=await sb.from('news_comments').select('*').eq('news_id',newsId).order('created_at',{ascending:true});
+  const coms=data||[];
+  document.getElementById('cCnt').textContent=coms.length;
+  const colors=['#6366f1','#10b981','#f59e42','#a78bfa','#f87171','#4f8ef7'];
+  document.getElementById('cList').innerHTML=coms.length?coms.map((c,i)=>{
+    const ini=(c.author_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const d=new Date(c.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'});
+    return '<div class="ci"><div class="ch2"><div class="cava" style="background:'+colors[i%colors.length]+'">'+ini+'</div><div class="cauth">'+(c.author_name||'Аноним')+'</div><div class="cdate">'+d+'</div></div><div class="ctxt">'+c.text+'</div></div>';
+  }).join(''):'<div style="padding:18px 22px;font-size:13px;color:var(--mu)">Пока нет комментариев. Будьте первым!</div>';
 }
-function addComment(){
-  const txt=document.getElementById('cInp').value.trim();if(!txt)return;
-  const name=(UP?.full_name||'Пользователь').split(' ').slice(0,2).join(' ');
-  const ini=name.split(' ').map(w=>w[0]).join('').toUpperCase();
-  arts[CA].coms.push({a:name,av:ini,cl:'#4f8ef7',t:txt,d:new Date().toLocaleDateString('ru',{day:'numeric',month:'long'})});
-  document.getElementById('cInp').value='';renderComs(CA);
+
+async function addComment(){
+  const txt=document.getElementById('cInp').value.trim();if(!txt||!_curNews)return;
+  const name=(UP?.full_name||'Житель').split(' ').slice(0,2).join(' ');
+  await sb.from('news_comments').insert({news_id:_curNews.id,user_id:CU.id,author_name:name,text:txt});
+  document.getElementById('cInp').value='';
+  await loadComments(_curNews.id);
 }
 
 // ── CHAT (UK + DISPATCHER) ──
@@ -1759,11 +1877,29 @@ function switchChat(mode,el){
   }
 }
 
-function renderUKChat(){
+async function renderUKChat(){
   const msgs=document.getElementById('chatMsgs');
-  const ukName=UA?.uk_name||'УК Комфорт';
-  msgs.innerHTML=`
-    <div class="msg them"><div class="mb3">Добрый день! Я — поддержка ${ukName}. Чем могу помочь?</div><div class="mt">10:02</div></div>`;
+  const ukName=UA?.uk_name||'УК';
+  if(!UA||!UA.company_id){
+    msgs.innerHTML='<div class="msg them"><div class="mb3">Чтобы начать чат с УК, выберите вашу управляющую компанию в настройках (раздел «Квартира»).</div></div>';
+    document.getElementById('chatInputArea').style.display='none';
+    return;
+  }
+  document.getElementById('chatInputArea').style.display='flex';
+  const{data}=await sb.from('messages').select('*').eq('resident_id',CU.id).eq('company_id',UA.company_id).order('created_at',{ascending:true});
+  const list=data||[];
+  // помечаем сообщения от УК как прочитанные
+  list.filter(m=>m.sender==='uk'&&!m.read).forEach(async m=>{await sb.from('messages').update({read:true}).eq('id',m.id);});
+  if(!list.length){
+    msgs.innerHTML='<div class="msg them"><div class="mb3">Добрый день! Я — поддержка '+ukName+'. Напишите ваш вопрос, и мы ответим.</div></div>';
+    return;
+  }
+  msgs.innerHTML=list.map(m=>{
+    const t=new Date(m.created_at).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+    const cls=m.sender==='resident'?'me':'them';
+    return '<div class="msg '+cls+'"><div class="mb3">'+m.text+'</div><div class="mt">'+t+'</div></div>';
+  }).join('');
+  msgs.scrollTop=msgs.scrollHeight;
 }
 
 function renderDispatcher(){
@@ -1775,7 +1911,7 @@ function renderDispatcher(){
     msgs.innerHTML='<div class="msg them"><div class="mb3">У вас пока нет заявок. Создайте заявку в разделе «Заявки».</div><div class="mt">Сейчас</div></div>';
     return;
   }
-  msgs.innerHTML='<div class="msg them"><div class="mb3">Привет! Вот статусы ваших заявок:</div><div class="mt">Сейчас</div></div>'+
+  msgs.innerHTML='<div class="msg them"><div class="mb3">Здравствуйте! Здесь отображаются статусы ваших заявок. По заявкам в работе — ожидайте ответа от диспетчера, мы свяжемся с вами.</div><div class="mt">Сейчас</div></div>'+
   UT.map(t=>{
     const d=new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'});
     return `<div class="msg them" style="max-width:90%">
@@ -1801,34 +1937,72 @@ function renderDispatcher(){
 }
 
 function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
-function sendMsg(){
+async function sendMsg(){
   if(chatMode!=='uk')return;
   const inp=document.getElementById('chatInp'),txt=inp.value.trim();if(!txt)return;
-  const msgs=document.getElementById('chatMsgs'),now=new Date(),t=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
-  const me=document.createElement('div');me.className='msg me';me.innerHTML=`<div class="mb3">${txt}</div><div class="mt">${t}</div>`;
-  msgs.appendChild(me);inp.value='';msgs.scrollTop=msgs.scrollHeight;
-  setTimeout(()=>{const tm=document.createElement('div');tm.className='msg them';tm.innerHTML=`<div class="mb3">${ukReplies[ri%ukReplies.length]}</div><div class="mt">${t}</div>`;msgs.appendChild(tm);ri++;msgs.scrollTop=msgs.scrollHeight;},1200);
+  if(!UA||!UA.company_id){toast('⚠️','Сначала выберите УК в настройках');return;}
+  inp.value='';
+  await sb.from('messages').insert({company_id:UA.company_id,resident_id:CU.id,sender:'resident',text:txt,read:false});
+  // уведомить УК
+  await notifyUK('💬','var(--acd)','Новое сообщение от '+(UP?.full_name||'жителя')+': '+txt.slice(0,40));
+  await renderUKChat();
 }
 
 // ── SETTINGS ──
 async function saveProfile(){
-  const name=document.getElementById('stNameI').value.trim(),phone=document.getElementById('stPhone').value.trim();
+  const name=document.getElementById('stNameI').value.trim();
+  const phone=document.getElementById('stPhone').value.trim();
+  // Проверка ФИО — минимум 2 слова, только буквы
+  if(name){
+    const words=name.split(/\s+/).filter(Boolean);
+    if(words.length<2){toast('⚠️','Введите фамилию и имя (минимум 2 слова)');return;}
+    if(!/^[А-Яа-яЁёA-Za-z\s\-]+$/.test(name)){toast('⚠️','ФИО должно содержать только буквы');return;}
+  }
+  // Проверка телефона — формат +7 (XXX) XXX-XX-XX
+  if(phone){
+    const digits=phone.replace(/\D/g,'');
+    if(digits.length<11){toast('⚠️','Введите полный номер: +7 (XXX) XXX-XX-XX');return;}
+  }
   await sb.from('profiles').upsert({id:CU.id,full_name:name,phone});
   await lPr();renderSidebar();toast('✅','Профиль сохранён');
+}
+
+// Маска телефона +7 (XXX) XXX-XX-XX
+function formatPhone(el){
+  let d=el.value.replace(/\D/g,'');
+  if(d.startsWith('8'))d='7'+d.slice(1);
+  if(!d.startsWith('7'))d='7'+d;
+  d=d.slice(0,11);
+  let f='+7';
+  if(d.length>1)f+=' ('+d.slice(1,4);
+  if(d.length>=5)f+=') '+d.slice(4,7);
+  if(d.length>=8)f+='-'+d.slice(7,9);
+  if(d.length>=10)f+='-'+d.slice(9,11);
+  el.value=f;
 }
 
 async function saveApt(){
   const manual=document.getElementById('sUKManual').value.trim();
   const ukName=manual||document.getElementById('sUK').value;
+  // География: ручной ввод приоритетнее выпадающего списка
+  const regSel=document.getElementById('sReg').options[document.getElementById('sReg').selectedIndex]?.text||'';
+  const citySel=document.getElementById('sCity').options[document.getElementById('sCity').selectedIndex]?.text||'';
+  const distSel=document.getElementById('sDist').options[document.getElementById('sDist').selectedIndex]?.text||'';
+  const regMan=document.getElementById('sRegManual').value.trim();
+  const cityMan=document.getElementById('sCityManual').value.trim();
+  const distMan=document.getElementById('sDistManual').value.trim();
+  const region=regMan||(regSel.includes('Другой')?'':regSel);
+  const city=cityMan||(citySel.includes('Другой')?'':citySel);
+  const district=distMan||(distSel.includes('Другой')?'':distSel);
   const d={user_id:CU.id,
     address:document.getElementById('sAddr').value,
     apartment_number:document.getElementById('sAptN').value,
     personal_account:document.getElementById('sAcc').value,
     area:parseFloat(document.getElementById('sArea').value)||null,
     uk_name:ukName,
-    city:document.getElementById('sCity').options[document.getElementById('sCity').selectedIndex]?.text||'',
-    region:document.getElementById('sReg').options[document.getElementById('sReg').selectedIndex]?.text||'',
-    district:document.getElementById('sDist').options[document.getElementById('sDist').selectedIndex]?.text||''
+    city:city,
+    region:region,
+    district:district
   };
   // Привязка к УК по названию (чтобы УК видела этого жителя)
   try{
@@ -1840,7 +2014,7 @@ async function saveApt(){
   }catch(e){/* компания с таким названием не зарегистрирована — это нормально */}
   if(UA)await sb.from('apartments').update(d).eq('id',UA.id);
   else await sb.from('apartments').insert(d);
-  await lPr();renderSidebar();toast('✅','Данные квартиры сохранены');
+  await lPr();renderSidebar();await lNews();toast('✅','Данные квартиры сохранены');
 }
 
 // GEO
@@ -1856,11 +2030,23 @@ function updateDistricts(){
   Object.entries(geo[reg]?.cities[city]?.d||{}).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;d.appendChild(o);});
   updateUK();
 }
-function updateUK(){
+async function updateUK(){
   const dist=document.getElementById('sDist').value;
-  const uks=ukDB[dist]||['Не найдено — введите вручную'];
+  const uks=ukDB[dist]||[];
   const u=document.getElementById('sUK');
-  u.innerHTML=uks.map(x=>`<option>${x}</option>`).join('');
+  // Зарегистрированные УК из базы (реальные компании на платформе)
+  let registered=[];
+  try{
+    const{data}=await sb.from('companies').select('name,city,district');
+    registered=(data||[]).map(c=>c.name);
+  }catch(e){}
+  // Объединяем: сначала зарегистрированные (реальные), потом справочник
+  const all=[...new Set([...registered,...uks])].filter(Boolean);
+  if(!all.length){
+    u.innerHTML='<option value="">— Введите УК вручную ниже —</option>';
+  }else{
+    u.innerHTML='<option value="">— Выберите УК —</option>'+all.map(x=>`<option>${x}</option>`).join('');
+  }
   updateUKInfo();
 }
 function updateUKInfo(){
@@ -2064,6 +2250,7 @@ async function processPayment(){
 // ═══════════════════════════════════════════
 let UCompany=null,UHouses=[],UResidents=[],UCompBills=[],UCompTickets=[];
 let UKNotifs=[];
+let URApts={};
 
 async function lUKNot(){
   const{data}=await sb.from('notifications').select('*').eq('user_id',CU.id).order('created_at',{ascending:false});
@@ -2096,6 +2283,9 @@ async function loadUKData(){
     // 3. Жители компании (профили с company_id)
     const{data:res}=await sb.from('profiles').select('*').eq('company_id',UCompany.id);
     UResidents=(res||[]).filter(r=>r.role!=='uk_admin');
+    // Квартиры жителей (для отображения адреса и фильтра по дому)
+    const{data:apts}=await sb.from('apartments').select('*').eq('company_id',UCompany.id);
+    URApts={};(apts||[]).forEach(a=>{URApts[a.user_id]=a;});
     // 4. Квитанции компании
     const{data:bills}=await sb.from('bills').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
     UCompBills=bills||[];
@@ -2105,6 +2295,7 @@ async function loadUKData(){
   }
   renderUKAll();
   await lUKNot();
+  await lUKChat();
   renderUKNotifs();
   startPolling();
 }
@@ -2120,7 +2311,7 @@ function renderUKAll(){
   renderUKResidents();
   renderUKBills();
   renderUKTickets('all');
-  fillBillResident();
+  fillBillResident();fillBillPeriods();
   // badge
   const openT=UCompTickets.filter(t=>t.status!=='done').length;
   const b=document.getElementById('ukTBadge');if(b){b.textContent=openT;b.style.display=openT?'':'none';}
@@ -2160,11 +2351,21 @@ function renderUKHouses(){
 
 function renderUKResidents(){
   const el=document.getElementById('ukResidentsList');
-  document.getElementById('ukResCount').textContent=UResidents.length+' чел.';
-  if(!UResidents.length){el.innerHTML='<div class="emp"><div class="big">👥</div><p>Жителей пока нет.<br>Они появятся когда зарегистрируются и выберут вашу УК.</p></div>';return;}
-  el.innerHTML=UResidents.map(r=>{
+  // заполнить фильтр домов
+  const hf=document.getElementById('ukResHouseFilter');
+  if(hf&&hf.options.length<=1&&UHouses.length){
+    hf.innerHTML='<option value="">Все дома</option>'+UHouses.map(h=>'<option value="'+h.address+'">'+h.address+'</option>').join('');
+  }
+  const filterHouse=hf?hf.value:'';
+  let list=UResidents.slice();
+  if(filterHouse){list=list.filter(r=>(URApts[r.id]&&URApts[r.id].address===filterHouse));}
+  document.getElementById('ukResCount').textContent=list.length+' чел.';
+  if(!list.length){el.innerHTML='<div class="emp"><div class="big">👥</div><p>Жителей пока нет.<br>Они появятся когда зарегистрируются и выберут вашу УК.</p></div>';return;}
+  el.innerHTML=list.map(r=>{
     const ini=(r.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    return '<div class="br" style="cursor:default"><div class="ava">'+ini+'</div><div class="binf"><div class="bn">'+(r.full_name||'Без имени')+'</div><div class="bo">'+(r.email||'')+(r.phone?' · '+r.phone:'')+'</div></div></div>';
+    const apt=URApts[r.id];
+    const addr=apt?(apt.address+(apt.apartment_number?', кв. '+apt.apartment_number:'')):'Адрес не указан';
+    return '<div class="br" style="cursor:default"><div class="ava">'+ini+'</div><div class="binf"><div class="bn">'+(r.full_name||'Без имени')+'</div><div class="bo">🏠 '+addr+'</div><div class="bo">'+(r.email||'')+(r.phone?' · '+r.phone:'')+'</div></div></div>';
   }).join('');
 }
 
@@ -2185,15 +2386,35 @@ function renderUKTickets(filter){
   const stx={new:'Новая',progress:'В работе',done:'Выполнено'};
   const stc={new:'new',progress:'progress',done:'done'};
   el.innerHTML=show.map(t=>{
-    const d=new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'});
+    const d=new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
     const res=UResidents.find(r=>r.id===t.user_id);
     const who=res?res.full_name:'житель';
+    const apt=URApts[t.user_id];
+    const addr=apt?(apt.address+(apt.apartment_number?', кв. '+apt.apartment_number:'')):'';
     let actions='';
-    if(t.status==='new')actions='<button class="btn bp bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'progress\')">Принять в работу</button>';
-    else if(t.status==='progress')actions='<button class="btn bp bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'done\')">Отметить выполненной</button>';
-    else actions='<span class="tag done">✓ Завершена</span>';
-    return '<div class="tc"><div class="tt"><div><div class="tti">'+t.category+'</div><div class="tnum">#'+(t.number||'')+' · '+who+'</div></div><div class="tag '+(stc[t.status]||'new')+'">'+(stx[t.status]||'Новая')+'</div></div><div class="tdesc">'+(t.description||'')+'</div><div class="tmeta"><span>📅 '+d+'</span></div><div style="margin-top:12px">'+actions+'</div></div>';
+    if(t.status==='new'){
+      actions='<button class="btn bp bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'progress\')">✓ Принять в работу</button>'+
+        '<button class="btn brd bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'done\')">Закрыть</button>';
+    }else if(t.status==='progress'){
+      actions='<button class="btn bp bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'done\')">✓ Отметить выполненной</button>'+
+        '<button class="btn bg2 bsm" onclick="ukAssignMaster(\''+t.id+'\')">👷 Назначить мастера</button>';
+    }else{
+      actions='<span class="tag done">✓ Завершена</span>'+
+        '<button class="btn bg2 bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'progress\')">Вернуть в работу</button>';
+    }
+    const master=t.master?'<div style="font-size:11.5px;color:var(--mu);margin-top:4px">👷 Мастер: '+t.master+'</div>':'';
+    return '<div class="tc"><div class="tt"><div><div class="tti">'+t.category+'</div><div class="tnum">#'+(t.number||'')+' · '+who+(addr?' · 🏠 '+addr:'')+'</div></div><div class="tag '+(stc[t.status]||'new')+'">'+(stx[t.status]||'Новая')+'</div></div><div class="tdesc">'+(t.description||'')+'</div>'+master+'<div class="tmeta"><span>📅 '+d+'</span></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+actions+'</div></div>';
   }).join('');
+}
+
+async function ukAssignMaster(id){
+  const name=prompt('Имя мастера для назначения:');
+  if(!name||!name.trim())return;
+  await sb.from('tickets').update({master:name.trim()}).eq('id',id);
+  const t=UCompTickets.find(x=>x.id===id);
+  if(t)await sb.from('notifications').insert({user_id:t.user_id,icon:'👷',bg:'var(--acd)',text:'На заявку #'+t.number+' назначен мастер: '+name.trim(),read:false});
+  await loadUKData();
+  toast('👷','Мастер назначен');
 }
 
 function ukFilterTickets(el,status){
@@ -2221,14 +2442,18 @@ async function addHouse(){
   const addr=document.getElementById('hAddr').value.trim();
   if(!addr){alert('Введите адрес дома');return;}
   if(!UCompany){alert('Компания не найдена');return;}
+  const regSel=document.getElementById('hReg').value;
+  const regMan=document.getElementById('hRegManual').value.trim();
+  const region=regMan||(regSel==='other'?'':regSel);
   await sb.from('houses').insert({
     company_id:UCompany.id,
     address:addr,
     city:document.getElementById('hCity').value.trim(),
+    district:document.getElementById('hDist').value.trim(),
     floors:parseInt(document.getElementById('hFloors').value)||null,
     entrances:parseInt(document.getElementById('hEntr').value)||null
   });
-  ['hAddr','hCity','hFloors','hEntr'].forEach(id=>document.getElementById(id).value='');
+  ['hAddr','hCity','hDist','hFloors','hEntr','hRegManual'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('addHouseForm').style.display='none';
   await loadUKData();
   toast('🏘️','Дом добавлен');
@@ -2254,8 +2479,30 @@ function addServiceRow(){
   const row=document.createElement('div');
   row.className='bill-service-row';
   row.style.cssText='display:grid;grid-template-columns:1fr 140px 40px;gap:10px;margin-bottom:10px';
-  row.innerHTML='<input class="inp" placeholder="Название услуги" data-svc="name"><input class="inp" type="number" placeholder="Сумма ₽" data-svc="amount"><button class="btn bg2" onclick="this.parentElement.remove()" style="padding:0">✕</button>';
+  row.innerHTML='<select class="inp" data-svc="name"><option value="">— Выберите услугу —</option><option>Холодная вода</option><option>Горячая вода</option><option>Электроэнергия</option><option>Отопление</option><option>Газоснабжение</option><option>Водоотведение</option><option>Управление домом</option><option>Содержание жилья</option><option>Капитальный ремонт</option><option>Вывоз мусора</option><option>Домофон</option><option>Лифт</option></select><input class="inp" type="number" min="0" max="100000" step="0.01" placeholder="Сумма ₽" data-svc="amount" oninput="checkAmount(this)"><button class="btn bg2" onclick="this.parentElement.remove()" style="padding:0">✕</button>';
   wrap.appendChild(row);
+}
+
+// Проверка суммы — предупреждение при подозрительных значениях
+function checkAmount(el){
+  const v=parseFloat(el.value);
+  if(v>50000){el.style.borderColor='var(--or)';el.title='Сумма больше 50 000 ₽ — проверьте правильность';}
+  else if(v<0){el.value='0';}
+  else{el.style.borderColor='';el.title='';}
+}
+
+// Заполнить выпадающий список периодов (текущий + 11 предыдущих месяцев)
+function fillBillPeriods(){
+  const sel=document.getElementById('billPeriod');
+  if(!sel)return;
+  const opts=[];
+  const now=new Date();
+  for(let i=0;i<12;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const label=d.toLocaleString('ru',{month:'long',year:'numeric'});
+    opts.push('<option>'+label.charAt(0).toUpperCase()+label.slice(1)+'</option>');
+  }
+  sel.innerHTML=opts.join('');
 }
 
 async function issueBill(){
@@ -2265,12 +2512,14 @@ async function issueBill(){
   if(!period){alert('Укажите период (напр. Июнь 2026)');return;}
   const rows=document.querySelectorAll('#billServices .bill-service-row');
   const services=[];
+  let hasBig=false;
   rows.forEach(r=>{
     const name=r.querySelector('[data-svc="name"]').value.trim();
     const amount=parseFloat(r.querySelector('[data-svc="amount"]').value);
-    if(name&&amount>0)services.push({name,amount});
+    if(name&&amount>0){services.push({name,amount});if(amount>50000)hasBig=true;}
   });
-  if(!services.length){alert('Добавьте хотя бы одну услугу с суммой');return;}
+  if(!services.length){alert('Выберите услугу и укажите сумму');return;}
+  if(hasBig&&!confirm('Одна из сумм больше 50 000 ₽. Вы уверены что данные верны?'))return;
   // находим квартиру жителя
   const{data:apt}=await sb.from('apartments').select('id').eq('user_id',userId).single();
   const iconMap={'Холодная вода':'💧','Горячая вода':'🌡️','Электроэнергия':'⚡','Отопление':'🔥','Управление домом':'🏢'};
@@ -2307,17 +2556,129 @@ function fillUKSettings(){
   set('ukSetEmail',UCompany.email);
   set('ukSetCity',UCompany.city);
   set('ukSetDistrict',UCompany.district);
+  const rs=document.getElementById('ukSetReg');if(rs&&UCompany.region){rs.value=UCompany.region;}
 }
 
 async function saveUKSettings(){
   if(!UCompany){alert('Компания не найдена');return;}
   const g=id=>document.getElementById(id).value.trim();
+  const regSel=g('ukSetReg'),regMan=g('ukSetRegManual');
+  const region=regMan||(regSel==='other'?'':regSel);
   await sb.from('companies').update({
     name:g('ukSetName'),inn:g('ukSetInn'),phone:g('ukSetPhone'),
-    email:g('ukSetEmail'),city:g('ukSetCity'),district:g('ukSetDistrict')
+    email:g('ukSetEmail'),city:g('ukSetCity'),district:g('ukSetDistrict'),region:region
   }).eq('id',UCompany.id);
   await loadUKData();
   toast('✅','Данные УК сохранены');
+}
+
+// ── НОВОСТИ УК ──
+let UKNews=[];
+
+async function lUKNews(){
+  if(!UCompany)return;
+  const{data}=await sb.from('news').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
+  UKNews=data||[];
+  renderUKNews();
+}
+
+function renderUKNews(){
+  const el=document.getElementById('ukNewsList');
+  if(!el)return;
+  if(!UKNews.length){el.innerHTML='<div class="emp"><div class="big">📢</div><p>Вы ещё не публиковали новости</p></div>';return;}
+  const catName={info:'Информация',warn:'Объявление',event:'Мероприятие'};
+  el.innerHTML=UKNews.map(n=>{
+    const d=new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
+    return '<div class="nc2" style="cursor:default"><div class="ntop"><div class="ncat '+(n.category||'info')+'">'+(catName[n.category]||'Информация')+'</div><div class="ndate">'+d+'</div></div><div class="ntit">'+n.title+'</div><div class="ntxt">'+((n.body||'').slice(0,120))+'</div><div class="nfoot" style="justify-content:space-between"><span>👁 '+(n.views||0)+' просмотров</span><button class="btn brd bsm" onclick="deleteNews(\''+n.id+'\')">Удалить</button></div></div>';
+  }).join('');
+}
+
+async function publishNews(){
+  const cat=document.getElementById('newsCat').value;
+  const title=document.getElementById('newsTitle').value.trim();
+  const body=document.getElementById('newsBody').value.trim();
+  if(!title){alert('Введите заголовок');return;}
+  if(!UCompany){alert('Компания не найдена');return;}
+  await sb.from('news').insert({company_id:UCompany.id,category:cat,title,body,views:0});
+  // уведомить всех жителей компании
+  for(const r of UResidents){
+    await sb.from('notifications').insert({user_id:r.id,icon:'📢',bg:'var(--pud)',text:'Новое объявление: '+title,read:false});
+  }
+  document.getElementById('newsTitle').value='';
+  document.getElementById('newsBody').value='';
+  document.getElementById('addNewsForm').style.display='none';
+  await lUKNews();
+  toast('📢','Новость опубликована для жителей');
+}
+
+async function deleteNews(id){
+  if(!confirm('Удалить эту новость?'))return;
+  await sb.from('news').delete().eq('id',id);
+  await lUKNews();
+  toast('🗑️','Новость удалена');
+}
+
+// ── ЧАТ УК С ЖИТЕЛЯМИ ──
+let UKChatMsgs=[];let _ukChatResident=null;
+
+async function lUKChat(){
+  if(!UCompany)return;
+  const{data}=await sb.from('messages').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:true});
+  UKChatMsgs=data||[];
+  renderUKChatThreads();
+  // badge — непрочитанные от жителей
+  const unread=UKChatMsgs.filter(m=>m.sender==='resident'&&!m.read).length;
+  const b=document.getElementById('ukChatBadge');if(b){b.textContent=unread;b.style.display=unread?'':'none';}
+}
+
+function renderUKChatThreads(){
+  const el=document.getElementById('ukChatThreads');
+  if(!el)return;
+  // группируем по жителю
+  const byRes={};
+  UKChatMsgs.forEach(m=>{if(!byRes[m.resident_id])byRes[m.resident_id]=[];byRes[m.resident_id].push(m);});
+  const ids=Object.keys(byRes);
+  if(!ids.length){el.innerHTML='<div style="padding:16px;font-size:13px;color:var(--mu)">Пока нет обращений от жителей</div>';return;}
+  el.innerHTML=ids.map(rid=>{
+    const res=UResidents.find(r=>r.id===rid);
+    const name=res?res.full_name:'Житель';
+    const msgs=byRes[rid];
+    const last=msgs[msgs.length-1];
+    const unread=msgs.filter(m=>m.sender==='resident'&&!m.read).length;
+    const ini=(name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return '<div class="cth'+(_ukChatResident===rid?' active':'')+'" onclick="openUKChat(\''+rid+'\')"><div style="display:flex;align-items:center;gap:8px"><div class="cava" style="width:28px;height:28px;font-size:10px;background:linear-gradient(135deg,var(--ac),var(--pu))">'+ini+'</div><div style="flex:1;min-width:0"><div class="cthn">'+name+(unread?' <span style="color:var(--rd)">●</span>':'')+'</div><div class="cthl">'+(last?last.text.slice(0,24):'')+'</div></div></div></div>';
+  }).join('');
+}
+
+async function openUKChat(rid){
+  _ukChatResident=rid;
+  const res=UResidents.find(r=>r.id===rid);
+  const apt=URApts[rid];
+  document.getElementById('ukChatPartner').textContent=res?res.full_name:'Житель';
+  document.getElementById('ukChatAddr').textContent=apt?(apt.address+(apt.apartment_number?', кв. '+apt.apartment_number:'')):'';
+  document.getElementById('ukChatInputArea').style.display='flex';
+  // пометить сообщения жителя прочитанными
+  const msgs=UKChatMsgs.filter(m=>m.resident_id===rid);
+  for(const m of msgs){if(m.sender==='resident'&&!m.read){await sb.from('messages').update({read:true}).eq('id',m.id);}}
+  renderUKChatThreads();
+  const box=document.getElementById('ukChatMsgs');
+  box.innerHTML=msgs.map(m=>{
+    const t=new Date(m.created_at).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+    const cls=m.sender==='uk'?'me':'them';
+    return '<div class="msg '+cls+'"><div class="mb3">'+m.text+'</div><div class="mt">'+t+'</div></div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function ukSendMsg(){
+  const inp=document.getElementById('ukChatInp');const txt=inp.value.trim();
+  if(!txt||!_ukChatResident)return;
+  inp.value='';
+  await sb.from('messages').insert({company_id:UCompany.id,resident_id:_ukChatResident,sender:'uk',text:txt,read:false});
+  // уведомить жителя
+  await sb.from('notifications').insert({user_id:_ukChatResident,icon:'💬',bg:'var(--acd)',text:'Ответ от УК: '+txt.slice(0,40),read:false});
+  await lUKChat();
+  await openUKChat(_ukChatResident);
 }
 
 // ── НАВИГАЦИЯ УК ──
@@ -2330,6 +2691,9 @@ function ukGoto(page,el){
   else document.querySelectorAll('#ukSidebar .ni').forEach(i=>{if((i.getAttribute('onclick')||'').includes("'"+page+"'"))i.classList.add('active');});
   window.scrollTo(0,0);
   if(page==='uksettings')fillUKSettings();
+  if(page==='uknews')lUKNews();
+  if(page==='ukchat')lUKChat();
+  if(page==='billing')fillBillPeriods();
   // закрыть моб. меню
   document.getElementById('ukSidebar').classList.remove('open');
   const bd=document.getElementById('ukBackdrop');if(bd)bd.classList.remove('open');
@@ -2350,6 +2714,7 @@ function goto(page,el){
   if(page==='meters')renderMeters();
   if(page==='tickets')renderTickets('all');
   if(page==='docs')renderArchive();
+  if(page==='news')lNews();
   if(page==='chat'){switchChat('uk',document.querySelector('.cth'));}
   if(page==='settings'){updateCities();renderCards();const se=document.getElementById('secEmail');if(se)se.textContent=CU?.email||'—';}
   closeSidebar();
@@ -2366,6 +2731,44 @@ function toggleTheme(cb){
   document.documentElement.setAttribute('data-theme',cb.checked?'light':'dark');
   document.getElementById('thIcon').textContent=cb.checked?'☀️':'🌙';
   document.getElementById('thTxt').textContent=cb.checked?'Светлая тема':'Тёмная тема';
+}
+
+// ── ЗВУК УВЕДОМЛЕНИЙ ──
+let _audioCtx=null;
+let _soundOn=true;
+function playNotifSound(){
+  if(!_soundOn)return;
+  try{
+    if(!_audioCtx)_audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const ctx=_audioCtx;
+    // Приятный двойной "динь" как в мессенджерах
+    const now=ctx.currentTime;
+    [880,1175].forEach((freq,i)=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type='sine';
+      osc.frequency.value=freq;
+      const t=now+i*0.12;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.25,t+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.start(t);osc.stop(t+0.25);
+    });
+  }catch(e){}
+}
+
+// Всплывающее уведомление как в приложениях (с иконкой и текстом)
+function toggleSound(cb){_soundOn=cb.checked;try{localStorage.setItem('dp_sound',_soundOn?'1':'0');}catch(e){}if(_soundOn)playNotifSound();}
+function loadSoundPref(){try{const s=localStorage.getItem('dp_sound');if(s==='0')_soundOn=false;}catch(e){}const t=document.getElementById('soundToggle');if(t)t.checked=_soundOn;}
+
+function showToastNotif(notif){
+  if(!notif)return;
+  const t=document.createElement('div');
+  t.className='toast notif-toast';
+  t.innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:10px;background:'+(notif.bg||'var(--acd)')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+(notif.icon||'🔔')+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px;margin-bottom:2px">Новое уведомление</div><div style="font-size:12px;color:var(--mu);line-height:1.4">'+notif.text+'</div></div></div>';
+  document.body.appendChild(t);
+  setTimeout(()=>{t.classList.add('hide');setTimeout(()=>{if(t.parentNode)t.remove();},400);},4500);
 }
 
 function toast(icon,text){
@@ -2417,10 +2820,13 @@ async function pollResident(){
     sb.from('bills').select('*').eq('user_id',CU.id).order('created_at',{ascending:false}),
     sb.from('notifications').select('*').eq('user_id',CU.id).order('created_at',{ascending:false})
   ]);
+  const newNotifs=(nt.data||[]).filter(n=>!n.read).length;
   const snap=JSON.stringify({t:(tk.data||[]).map(x=>x.id+x.status),b:(bl.data||[]).map(x=>x.id+x.status),n:(nt.data||[]).length});
   if(snap!==_lastSnapshot){
+    const prevUnread=UN.filter(n=>!n.read).length;
     _lastSnapshot=snap;
     UT=tk.data||[];UB=bl.data||[];UN=nt.data||[];
+    if(newNotifs>prevUnread){playNotifSound();showToastNotif(UN.find(n=>!n.read));}
     // Перерисовываем активные элементы
     const active=document.querySelector('#appPage .page.active');
     if(active){
@@ -2429,6 +2835,7 @@ async function pollResident(){
       if(id==='page-bills')renderBills();
       if(id==='page-tickets'){const f=document.querySelector('#page-tickets .fb.active');renderTickets(f?(f.getAttribute('onclick').match(/'(\w+)'/)||[])[1]||'all':'all');}
       if(id==='page-chat'&&chatMode==='dispatcher')renderDispatcher();
+      if(id==='page-chat'&&chatMode==='uk')renderUKChat();
     }
     renderNotifs();renderSidebar();
   }
@@ -2442,13 +2849,19 @@ async function pollUK(){
     sb.from('profiles').select('*').eq('company_id',UCompany.id),
     sb.from('notifications').select('*').eq('user_id',CU.id).order('created_at',{ascending:false})
   ]);
+  const newNotifs=(nt.data||[]).filter(n=>!n.read).length;
   const snap=JSON.stringify({t:(tk.data||[]).map(x=>x.id+x.status),b:(bl.data||[]).map(x=>x.id+x.status),r:(res.data||[]).length,n:(nt.data||[]).length});
   if(snap!==_lastSnapshot){
+    const prevUnread=UKNotifs.filter(n=>!n.read).length;
     _lastSnapshot=snap;
     UCompTickets=tk.data||[];
     UCompBills=bl.data||[];
     UResidents=(res.data||[]).filter(r=>r.role!=='uk_admin');
     UKNotifs=nt.data||[];
+    if(newNotifs>prevUnread){playNotifSound();showToastNotif(UKNotifs.find(n=>!n.read));}
+    lUKChat();
+    const ukActive=document.querySelector('#ukPage .page.active');
+    if(ukActive&&ukActive.id==='uk-ukchat'&&_ukChatResident)openUKChat(_ukChatResident);
     renderUKAll();
     renderUKNotifs();
   }
