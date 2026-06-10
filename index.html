@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1906 ZAHOD1-4 complete -->
+<!-- VERSION v1938 meters+district+validation -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -740,6 +740,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   <div class="ni active" onclick="ukGoto('dashboard',this)"><span class="ico">📊</span>Сводка</div>
   <div class="ni" onclick="ukGoto('houses',this)"><span class="ico">🏘️</span>Дома</div>
   <div class="ni" onclick="ukGoto('residents',this)"><span class="ico">👥</span>Жители</div>
+  <div class="ni" onclick="ukGoto('meters',this)"><span class="ico">📊</span>Показания счётчиков</div>
   <div class="ni" onclick="ukGoto('billing',this)"><span class="ico">💳</span>Начисления</div>
   <div class="ni" onclick="ukGoto('uktickets',this)"><span class="ico">📋</span>Заявки<span class="nb" id="ukTBadge" style="display:none">0</span></div>
   <div class="ni" onclick="ukGoto('uknews',this)"><span class="ico">📢</span>Новости</div>
@@ -824,6 +825,14 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   </div>
   <div class="card"><div class="ch"><span class="ct">Список жителей</span><span class="ca" id="ukResCount"></span></div>
     <div id="ukResidentsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+  </div>
+</div>
+
+<!-- ПОКАЗАНИЯ СЧЁТЧИКОВ -->
+<div id="uk-meters" class="page">
+  <div class="topbar"><div><div class="pt">Показания счётчиков</div><div class="ps">Переданные жителями показания</div></div></div>
+  <div class="card"><div class="ch"><span class="ct">Все показания</span><span class="ca" id="ukMetersCount"></span></div>
+    <div id="ukMetersList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
   </div>
 </div>
 
@@ -914,22 +923,24 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
     <div style="padding:20px 22px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="inpg" style="margin:0"><label class="inpl">Название УК</label><input class="inp" id="ukSetName"></div>
-        <div class="inpg" style="margin:0"><label class="inpl">ИНН</label><input class="inp" id="ukSetInn" placeholder="7700000000"></div>
-        <div class="inpg" style="margin:0"><label class="inpl">Телефон</label><input class="inp" id="ukSetPhone" placeholder="+7 (___) ___-__-__"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">ИНН</label><input class="inp" id="ukSetInn" placeholder="7700000000" maxlength="12" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Телефон</label><input class="inp" id="ukSetPhone" placeholder="+7 (___) ___-__-__" oninput="formatPhone(this)"></div>
         <div class="inpg" style="margin:0"><label class="inpl">Email</label><input class="inp" id="ukSetEmail"></div>
         <div class="inpg" style="margin:0"><label class="inpl">Регион</label>
-          <select class="inp" id="ukSetReg">
+          <select class="inp" id="ukSetReg" onchange="ukUpdateDistricts()">
             <option value="">— Выберите регион —</option>
-            <option>Москва и МО</option><option>Санкт-Петербург и ЛО</option><option>Свердловская область</option>
-            <option>Новосибирская область</option><option>Республика Татарстан</option><option>Краснодарский край</option>
-            <option>Нижегородская область</option><option>Самарская область</option><option>Челябинская область</option>
-            <option>Ростовская область</option><option>Республика Башкортостан</option><option>Пермский край</option>
-            <option>Воронежская область</option><option>Волгоградская область</option><option>Красноярский край</option>
+            <option value="msk">Москва и МО</option><option value="spb">Санкт-Петербург и ЛО</option><option value="ekb">Свердловская область</option>
+            <option value="nsk">Новосибирская область</option><option value="kzn">Республика Татарстан</option><option value="krd">Краснодарский край</option>
+            <option value="nnov">Нижегородская область</option><option value="sam">Самарская область</option><option value="chel">Челябинская область</option>
+            <option value="ros">Ростовская область</option><option value="bash">Республика Башкортостан</option><option value="perm">Пермский край</option>
+            <option value="vrn">Воронежская область</option><option value="volg">Волгоградская область</option><option value="krsk">Красноярский край</option>
             <option value="other">Другой регион</option>
           </select>
           <input class="inp" id="ukSetRegManual" placeholder="или впишите регион" style="margin-top:8px"></div>
-        <div class="inpg" style="margin:0"><label class="inpl">Город</label><input class="inp" id="ukSetCity" placeholder="Москва"></div>
-        <div class="inpg" style="margin:0"><label class="inpl">Район</label><input class="inp" id="ukSetDistrict" placeholder="Центральный"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Город</label><select class="inp" id="ukSetCity" onchange="ukUpdateCityDistricts()"></select>
+          <input class="inp" id="ukSetCityManual" placeholder="или впишите город" style="margin-top:8px"></div>
+        <div class="inpg" style="margin:0"><label class="inpl">Район</label><select class="inp" id="ukSetDistrict"></select>
+          <input class="inp" id="ukSetDistrictManual" placeholder="или впишите район" style="margin-top:8px"></div>
       </div>
       <button class="btn bp" style="margin-top:18px" onclick="saveUKSettings()">Сохранить</button>
     </div>
@@ -2249,6 +2260,7 @@ async function processPayment(){
 // ПАНЕЛЬ УПРАВЛЯЮЩЕЙ КОМПАНИИ — логика
 // ═══════════════════════════════════════════
 let UCompany=null,UHouses=[],UResidents=[],UCompBills=[],UCompTickets=[];
+let UCompMeters=[];
 let UKNotifs=[];
 let URApts={};
 
@@ -2286,6 +2298,13 @@ async function loadUKData(){
     // Квартиры жителей (для отображения адреса и фильтра по дому)
     const{data:apts}=await sb.from('apartments').select('*').eq('company_id',UCompany.id);
     URApts={};(apts||[]).forEach(a=>{URApts[a.user_id]=a;});
+    // Показания счётчиков жителей компании
+    const residentIds=UResidents.map(r=>r.id);
+    UCompMeters=[];
+    if(residentIds.length){
+      const{data:allMeters}=await sb.from('meters').select('*').order('submitted_at',{ascending:false});
+      UCompMeters=(allMeters||[]).filter(m=>residentIds.includes(m.user_id));
+    }
     // 4. Квитанции компании
     const{data:bills}=await sb.from('bills').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
     UCompBills=bills||[];
@@ -2310,6 +2329,7 @@ function renderUKAll(){
   renderUKHouses();
   renderUKResidents();
   renderUKBills();
+  renderUKMeters();
   renderUKTickets('all');
   fillBillResident();fillBillPeriods();
   // badge
@@ -2554,19 +2574,58 @@ function fillUKSettings(){
   set('ukSetInn',UCompany.inn);
   set('ukSetPhone',UCompany.phone);
   set('ukSetEmail',UCompany.email);
-  set('ukSetCity',UCompany.city);
-  set('ukSetDistrict',UCompany.district);
-  const rs=document.getElementById('ukSetReg');if(rs&&UCompany.region){rs.value=UCompany.region;}
+  // Регион: пытаемся найти в списке, иначе в ручное поле
+  const regNames={msk:'Москва и МО',spb:'Санкт-Петербург и ЛО',ekb:'Свердловская область',nsk:'Новосибирская область',kzn:'Республика Татарстан',krd:'Краснодарский край',nnov:'Нижегородская область',sam:'Самарская область',chel:'Челябинская область',ros:'Ростовская область',bash:'Республика Башкортостан',perm:'Пермский край',vrn:'Воронежская область',volg:'Волгоградская область',krsk:'Красноярский край'};
+  const rs=document.getElementById('ukSetReg');
+  if(rs&&UCompany.region){
+    const key=Object.keys(regNames).find(k=>regNames[k]===UCompany.region);
+    if(key){rs.value=key;ukUpdateDistricts();}
+    else{set('ukSetRegManual',UCompany.region);}
+  }
+  // Город и район кладём в ручные поля (надёжно)
+  set('ukSetCityManual',UCompany.city);
+  set('ukSetDistrictManual',UCompany.district);
+}
+
+function ukUpdateDistricts(){
+  const reg=document.getElementById('ukSetReg').value;
+  const c=document.getElementById('ukSetCity');
+  c.innerHTML='<option value="">— Выберите город —</option>';
+  if(reg&&geo[reg]){
+    Object.entries(geo[reg].cities).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v.name;c.appendChild(o);});
+  }
+  ukUpdateCityDistricts();
+}
+function ukUpdateCityDistricts(){
+  const reg=document.getElementById('ukSetReg').value;
+  const city=document.getElementById('ukSetCity').value;
+  const d=document.getElementById('ukSetDistrict');
+  d.innerHTML='<option value="">— Выберите район —</option>';
+  if(reg&&city&&geo[reg]&&geo[reg].cities[city]){
+    Object.entries(geo[reg].cities[city].d||{}).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;d.appendChild(o);});
+  }
 }
 
 async function saveUKSettings(){
   if(!UCompany){alert('Компания не найдена');return;}
-  const g=id=>document.getElementById(id).value.trim();
-  const regSel=g('ukSetReg'),regMan=g('ukSetRegManual');
-  const region=regMan||(regSel==='other'?'':regSel);
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const txt=id=>{const el=document.getElementById(id);return el&&el.selectedIndex>=0?(el.options[el.selectedIndex].text||''):'';};
+  const regSel=g('ukSetReg'),regTxt=txt('ukSetReg'),regMan=g('ukSetRegManual');
+  const region=regMan||(regSel==='other'||!regSel?'':regTxt);
+  const cityMan=g('ukSetCityManual'),cityTxt=txt('ukSetCity');
+  const city=cityMan||(cityTxt.includes('Выберите')?'':cityTxt);
+  const distMan=g('ukSetDistrictManual'),distTxt=txt('ukSetDistrict');
+  const district=distMan||(distTxt.includes('Выберите')?'':distTxt);
+  // Проверки
+  const name=g('ukSetName');
+  if(!name){toast('⚠️','Введите название УК');return;}
+  const phone=g('ukSetPhone');
+  if(phone){const digits=phone.replace(/\D/g,'');if(digits.length<11){toast('⚠️','Телефон: введите полный номер +7 (XXX) XXX-XX-XX');return;}}
+  const inn=g('ukSetInn');
+  if(inn&&!/^\d{10}$|^\d{12}$/.test(inn)){toast('⚠️','ИНН должен содержать 10 или 12 цифр');return;}
   await sb.from('companies').update({
-    name:g('ukSetName'),inn:g('ukSetInn'),phone:g('ukSetPhone'),
-    email:g('ukSetEmail'),city:g('ukSetCity'),district:g('ukSetDistrict'),region:region
+    name:name,inn:inn,phone:phone,
+    email:g('ukSetEmail'),city:city,district:district,region:region
   }).eq('id',UCompany.id);
   await loadUKData();
   toast('✅','Данные УК сохранены');
@@ -2681,6 +2740,23 @@ async function ukSendMsg(){
   await openUKChat(_ukChatResident);
 }
 
+// ── ПОКАЗАНИЯ СЧЁТЧИКОВ УК ──
+function renderUKMeters(){
+  const el=document.getElementById('ukMetersList');
+  if(!el)return;
+  document.getElementById('ukMetersCount').textContent=UCompMeters.length+' записей';
+  if(!UCompMeters.length){el.innerHTML='<div class="emp"><div class="big">📊</div><p>Жители ещё не передавали показания</p></div>';return;}
+  el.innerHTML=UCompMeters.map(m=>{
+    const res=UResidents.find(r=>r.id===m.user_id);
+    const who=res?res.full_name:'житель';
+    const apt=URApts[m.user_id];
+    const addr=apt?(apt.address+(apt.apartment_number?', кв. '+apt.apartment_number:'')):'';
+    const d=m.submitted_at?new Date(m.submitted_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}):'';
+    const diff=m.current_value-m.previous_value;
+    return '<div class="br" style="cursor:default"><div class="bi '+(m.type==='water_cold'?'w':m.type==='water_hot'?'hw':'e')+'">'+(m.icon||'📊')+'</div><div class="binf"><div class="bn">'+m.name+' — '+Number(m.current_value).toLocaleString("ru")+' '+m.unit+'</div><div class="bo">'+who+(addr?' · 🏠 '+addr:'')+' · Расход: +'+diff+' '+m.unit+'</div></div><div class="brt"><div class="bo">'+(m.period||'')+'</div><div class="bo">'+d+'</div></div></div>';
+  }).join('');
+}
+
 // ── НАВИГАЦИЯ УК ──
 function ukGoto(page,el){
   document.querySelectorAll('#ukPage .page').forEach(p=>p.classList.remove('active'));
@@ -2692,6 +2768,7 @@ function ukGoto(page,el){
   window.scrollTo(0,0);
   if(page==='uksettings')fillUKSettings();
   if(page==='uknews')lUKNews();
+  if(page==='meters')renderUKMeters();
   if(page==='ukchat')lUKChat();
   if(page==='billing')fillBillPeriods();
   // закрыть моб. меню
@@ -2859,6 +2936,9 @@ async function pollUK(){
     UResidents=(res.data||[]).filter(r=>r.role!=='uk_admin');
     UKNotifs=nt.data||[];
     if(newNotifs>prevUnread){playNotifSound();showToastNotif(UKNotifs.find(n=>!n.read));}
+    // обновляем показания счётчиков
+    const rids=UResidents.map(r=>r.id);
+    if(rids.length){const{data:mt}=await sb.from('meters').select('*').order('submitted_at',{ascending:false});UCompMeters=(mt||[]).filter(m=>rids.includes(m.user_id));}
     lUKChat();
     const ukActive=document.querySelector('#ukPage .page.active');
     if(ukActive&&ukActive.id==='uk-ukchat'&&_ukChatResident)openUKChat(_ukChatResident);
