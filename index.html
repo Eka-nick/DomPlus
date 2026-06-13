@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1812 uk-clean-reg -->
+<!-- VERSION v1820 live-code-check -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -1247,26 +1247,51 @@ function selectRole(role){
 }
 
 // Проверка URL: если ?uk=1 — режим регистрации УК
-function checkUKMode(){
+async function checkUKMode(){
   try{
     const params=new URLSearchParams(window.location.search);
     const ukParam=params.get('uk');
     if(ukParam){
-      // Показываем выбор роли и переключаем на УК
       const rs=document.getElementById('roleSelector');if(rs)rs.style.display='';
       const regTab=document.getElementById('tab-register');if(regTab)regTab.click();
       selectRole('uk_admin');
-      // Если в ссылке передан код (?uk=КОД, а не ?uk=1) — подставляем его
       if(ukParam!=='1'){
         const inviteInput=document.getElementById('rInvite');
         if(inviteInput){
           inviteInput.value=ukParam;
-          // делаем поле кода только для чтения и подсвечиваем что код принят
           inviteInput.readOnly=true;
-          inviteInput.style.background='var(--grd)';
-          inviteInput.style.borderColor='var(--gr)';
           const lbl=inviteInput.previousElementSibling;
-          if(lbl)lbl.innerHTML='🔑 Код доступа УК <span style="color:var(--gr)">✓ принят из ссылки</span>';
+          // СРАЗУ проверяем код в базе
+          if(lbl)lbl.innerHTML='🔑 Код доступа УК <span style="color:var(--mu)">проверяем...</span>';
+          try{
+            const{data:inv}=await sb.from('uk_invites').select('*').eq('code',ukParam).single();
+            if(!inv){
+              // Код не найден
+              inviteInput.style.background='var(--rdd)';
+              inviteInput.style.borderColor='var(--rd)';
+              if(lbl)lbl.innerHTML='🔑 Код доступа УК <span style="color:var(--rd)">✗ код не найден</span>';
+              showErr('Код «'+ukParam+'» не найден в системе. Проверьте ссылку или свяжитесь с администратором ДомПлюс.');
+              const btn=document.getElementById('regBtn');if(btn){btn.disabled=true;btn.style.opacity='.5';}
+            }else if(inv.used){
+              // Код уже использован
+              inviteInput.style.background='var(--ord)';
+              inviteInput.style.borderColor='var(--or)';
+              if(lbl)lbl.innerHTML='🔑 Код доступа УК <span style="color:var(--or)">✗ уже использован</span>';
+              showErr('Этот код уже был использован для регистрации. Запросите новый код у администратора.');
+              const btn=document.getElementById('regBtn');if(btn){btn.disabled=true;btn.style.opacity='.5';}
+            }else{
+              // Код действителен!
+              inviteInput.style.background='var(--grd)';
+              inviteInput.style.borderColor='var(--gr)';
+              if(lbl)lbl.innerHTML='🔑 Код доступа УК <span style="color:var(--gr)">✓ код действителен</span>';
+            }
+          }catch(e){
+            inviteInput.style.background='var(--rdd)';
+            inviteInput.style.borderColor='var(--rd)';
+            if(lbl)lbl.innerHTML='🔑 Код доступа УК <span style="color:var(--rd)">✗ код не найден</span>';
+            showErr('Код «'+ukParam+'» не найден. Проверьте ссылку.');
+            const btn=document.getElementById('regBtn');if(btn){btn.disabled=true;btn.style.opacity='.5';}
+          }
         }
       }
     }
