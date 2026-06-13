@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1807 uk-link-with-code -->
+<!-- VERSION v1812 uk-clean-reg -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -398,10 +398,10 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
         <div class="ig"><label class="il">Email</label><input class="if" type="email" id="rEmail" placeholder="example@mail.ru"></div>
         <div class="ig"><label class="il">Телефон</label><input class="if" type="tel" id="rPhone" placeholder="+7 (___) ___-__-__" oninput="formatPhone(this)"></div>
         <div class="ig"><label class="il">Пароль (мин. 6 символов)</label><input class="if" type="password" id="rPass" placeholder="••••••••"></div>
-        <div class="ig" id="roleSelector" style="display:none"><label class="il">Я регистрируюсь как</label>
-          <div style="display:flex;gap:8px">
-            <div class="role-opt active" id="role-resident" onclick="selectRole('resident')">🏠 Житель</div>
-            <div class="role-opt" id="role-uk" onclick="selectRole('uk_admin')">🏢 Управляющая компания</div>
+        <div class="ig" id="roleSelector" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--acd);border:1px solid rgba(79,142,247,.25);border-radius:10px">
+            <div style="font-size:22px">🏢</div>
+            <div><div style="font-size:13.5px;font-weight:600;color:var(--ac)">Регистрация управляющей компании</div><div style="font-size:11.5px;color:var(--mu)">Заполните данные вашей УК</div></div>
           </div>
         </div>
         <div class="ig" id="ukInviteField" style="display:none"><label class="il">🔑 Код доступа УК</label><input class="if" type="text" id="rInvite" placeholder="Введите код приглашения"></div>
@@ -1240,10 +1240,10 @@ async function doRegister(){
 let _regRole='resident';
 function selectRole(role){
   _regRole=role;
-  document.getElementById('role-resident').classList.toggle('active',role==='resident');
-  document.getElementById('role-uk').classList.toggle('active',role==='uk_admin');
-  document.getElementById('ukNameField').style.display=role==='uk_admin'?'':'none';
-  document.getElementById('ukInviteField').style.display=role==='uk_admin'?'':'none';
+  const rr=document.getElementById('role-resident');if(rr)rr.classList.toggle('active',role==='resident');
+  const ru=document.getElementById('role-uk');if(ru)ru.classList.toggle('active',role==='uk_admin');
+  const nf=document.getElementById('ukNameField');if(nf)nf.style.display=role==='uk_admin'?'':'none';
+  const inf=document.getElementById('ukInviteField');if(inf)inf.style.display=role==='uk_admin'?'':'none';
 }
 
 // Проверка URL: если ?uk=1 — режим регистрации УК
