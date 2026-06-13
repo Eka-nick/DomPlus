@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION v1820 live-code-check -->
+<!-- VERSION v1843 legal+docs+history+photo -->
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -245,6 +245,10 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 .pay-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--mu2);flex-shrink:0;transition:all .15s}
 .pay-opt.sel .pay-radio{border-color:var(--ac);background:var(--ac);box-shadow:inset 0 0 0 3px var(--sf2)}
 
+.consent-row{display:flex;align-items:flex-start;gap:9px;margin:4px 0 16px;font-size:12px;color:var(--mu);line-height:1.5;cursor:pointer}
+.consent-row input{margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;accent-color:var(--ac)}
+.consent-row a{color:var(--ac);text-decoration:none}
+.consent-row a:hover{text-decoration:underline}
 .role-opt{flex:1;padding:11px 10px;text-align:center;border:1.5px solid var(--bd2);border-radius:10px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--mu);transition:all .15s;user-select:none}
 .role-opt:hover{border-color:var(--ac)}
 .role-opt.active{border-color:var(--ac);background:var(--acd);color:var(--ac)}
@@ -406,6 +410,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
         </div>
         <div class="ig" id="ukInviteField" style="display:none"><label class="il">🔑 Код доступа УК</label><input class="if" type="text" id="rInvite" placeholder="Введите код приглашения"></div>
         <div class="ig" id="ukNameField" style="display:none"><label class="il">Название УК</label><input class="if" type="text" id="rUKName" placeholder="УК Комфорт"></div>
+        <label class="consent-row"><input type="checkbox" id="rConsent"><span>Я согласен на <a href="#" onclick="openLegal('pdn');return false">обработку персональных данных</a> и принимаю <a href="#" onclick="openLegal('privacy');return false">политику конфиденциальности</a></span></label>
         <button class="btn-auth" id="regBtn" onclick="doRegister()">Создать аккаунт</button>
       </div>
     </div>
@@ -537,6 +542,10 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
     <div class="inpg"><label class="inpl">Категория</label><select class="inp" id="tCat"><option>🔧 Сантехника</option><option>⚡ Электрика</option><option>🪟 Окна и двери</option><option>🏗️ Строительные работы</option><option>🧹 Уборка</option><option>📦 Другое</option></select></div>
     <div class="inpg"><label class="inpl">Описание проблемы</label><textarea class="inp" id="tDesc" placeholder="Опишите подробно..."></textarea></div>
     <div class="inpg"><label class="inpl">Удобное время</label><input class="inp" type="datetime-local" id="tTime"></div>
+    <div class="inpg"><label class="inpl">📷 Фото проблемы (необязательно)</label>
+      <input type="file" id="tPhoto" accept="image/*" onchange="previewTicketPhoto(this)" style="font-size:13px;color:var(--mu)">
+      <div id="tPhotoPreview" style="margin-top:10px"></div>
+    </div>
     <div style="display:flex;gap:10px"><button class="btn bp" onclick="createTicket()">Отправить</button><button class="btn bg2" onclick="document.getElementById('ntForm').style.display='none'">Отмена</button></div>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -569,7 +578,13 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 
 <!-- DOCS -->
 <div id="page-docs" class="page">
-  <div class="topbar"><div><div class="pt">Документы</div><div class="ps">Договоры и архив квитанций</div></div></div>
+  <div class="topbar"><div><div class="pt">Документы</div><div class="ps">Документы от УК и архив квитанций</div></div></div>
+  <div style="margin-bottom:24px"><div style="font-size:14px;font-weight:600;margin-bottom:12px">📄 Документы дома</div>
+    <div class="card">
+      <div class="ch"><span class="ct">От управляющей компании</span></div>
+      <div id="docsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+    </div>
+  </div>
   <div><div style="font-size:14px;font-weight:600;margin-bottom:12px">🧾 Архив квитанций (PDF)</div>
     <div class="card">
       <div class="ch"><span class="ct">Сохранённые квитанции</span><span class="ca" onclick="showPDFModal()">+ Создать PDF</span></div>
@@ -745,6 +760,7 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   <div class="ni" onclick="ukGoto('billing',this)"><span class="ico">💳</span>Начисления</div>
   <div class="ni" onclick="ukGoto('uktickets',this)"><span class="ico">📋</span>Заявки<span class="nb" id="ukTBadge" style="display:none">0</span></div>
   <div class="ni" onclick="ukGoto('uknews',this)"><span class="ico">📢</span>Новости</div>
+  <div class="ni" onclick="ukGoto('ukdocs',this)"><span class="ico">📄</span>Документы</div>
   <div class="ni" onclick="ukGoto('ukchat',this)"><span class="ico">💬</span>Чат с жителями<span class="nb" id="ukChatBadge" style="display:none">0</span></div>
   <div class="nl">Аккаунт</div>
   <div class="ni" onclick="ukGoto('uksettings',this)"><span class="ico">⚙️</span>Настройки УК</div>
@@ -879,6 +895,22 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
   <div class="tl" id="ukTicketsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
 </div>
 
+<!-- ДОКУМЕНТЫ УК -->
+<div id="uk-ukdocs" class="page">
+  <div class="topbar"><div><div class="pt">Документы дома</div><div class="ps">Документы для жителей</div></div><button class="btn bp bsm" onclick="document.getElementById('addDocForm').style.display='block'">+ Добавить документ</button></div>
+  <div id="addDocForm" style="display:none;background:var(--sf);border:1px solid var(--bd);border-radius:var(--ra);padding:24px;margin-bottom:22px">
+    <h4 style="font-size:15px;font-weight:600;margin-bottom:8px">📄 Новый документ</h4>
+    <div class="notice bl" style="margin-bottom:16px"><span>ℹ️</span><span>Загрузите документ на облако (Яндекс.Диск, Google Drive) и вставьте ссылку. Жители смогут открыть его.</span></div>
+    <div class="inpg"><label class="inpl">Название документа</label><input class="inp" id="docName" placeholder="Напр. Договор управления, Отчёт за 2025 год"></div>
+    <div class="inpg"><label class="inpl">Тип</label>
+      <select class="inp" id="docType"><option value="pdf">📄 PDF документ</option><option value="report">📊 Отчёт</option><option value="contract">📋 Договор</option><option value="other">📎 Другое</option></select>
+    </div>
+    <div class="inpg"><label class="inpl">Ссылка на документ</label><input class="inp" id="docUrl" placeholder="https://disk.yandex.ru/..."></div>
+    <div style="display:flex;gap:10px"><button class="btn bp" onclick="addDoc()">Добавить</button><button class="btn bg2" onclick="document.getElementById('addDocForm').style.display='none'">Отмена</button></div>
+  </div>
+  <div id="ukDocsList"><div class="load"><div class="spin"></div>Загрузка...</div></div>
+</div>
+
 <!-- ЧАТ УК С ЖИТЕЛЯМИ -->
 <div id="uk-ukchat" class="page">
   <div class="topbar"><div><div class="pt">Чат с жителями</div><div class="ps">Обращения жителей в поддержку</div></div></div>
@@ -954,6 +986,24 @@ textarea.inp{resize:vertical;min-height:88px}select.inp{cursor:pointer}
 <!-- MODALS -->
 <div class="ov" id="payOv" onclick="if(event.target.id==='payOv')document.getElementById('payOv').classList.remove('open')"><div class="modal"><div id="payC"></div></div></div>
 <div class="ov" id="prvOv" onclick="if(event.target.id==='prvOv')document.getElementById('prvOv').classList.remove('open')"><div class="modal" style="width:480px"><div id="prvC"></div></div></div>
+<!-- METER HISTORY MODAL -->
+<div class="ov" id="meterHistOv" onclick="if(event.target.id==='meterHistOv')document.getElementById('meterHistOv').classList.remove('open')">
+  <div class="modal" style="width:560px">
+    <h3 id="meterHistTitle">История показаний</h3>
+    <div id="meterHistBody" style="margin-top:16px"></div>
+    <div class="mact" style="margin-top:16px"><button class="btn bp" onclick="document.getElementById('meterHistOv').classList.remove('open')">Закрыть</button></div>
+  </div>
+</div>
+
+<!-- LEGAL MODAL (политика конфиденциальности / согласие ПДн) -->
+<div class="ov" id="legalOv" onclick="if(event.target.id==='legalOv')document.getElementById('legalOv').classList.remove('open')">
+  <div class="modal" style="width:680px;max-height:85vh;overflow-y:auto">
+    <h3 id="legalTitle">Политика конфиденциальности</h3>
+    <div id="legalBody" style="font-size:13px;line-height:1.7;color:var(--tx);margin-top:14px"></div>
+    <div class="mact" style="margin-top:18px"><button class="btn bp" onclick="document.getElementById('legalOv').classList.remove('open')">Понятно</button></div>
+  </div>
+</div>
+
 <!-- ADD CARD MODAL -->
 <div class="ov" id="cardOv" onclick="if(event.target.id==='cardOv')document.getElementById('cardOv').classList.remove('open')">
   <div class="modal" style="width:420px">
@@ -1187,6 +1237,8 @@ async function doRegister(){
     const phone=document.getElementById('rPhone').value.trim(),pass=document.getElementById('rPass').value;
     if(!name||!email||!pass){showErr('Заполните обязательные поля');return;}
     if(pass.length<6){showErr('Пароль минимум 6 символов');return;}
+    const consent=document.getElementById('rConsent');
+    if(!consent||!consent.checked){showErr('Необходимо согласие на обработку персональных данных');return;}
     let _inviteRow=null;
     if(_regRole==='uk_admin'){
       const ukName=document.getElementById('rUKName').value.trim();
@@ -1203,6 +1255,8 @@ async function doRegister(){
     }
     const btn=document.getElementById('regBtn');btn.disabled=true;btn.textContent='Создаём аккаунт...';
     const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name,phone}}});
+    // Если включено подтверждение email — сессии не будет, покажем экран "проверьте почту"
+    const _needConfirm=data&&data.user&&!data.session;
     btn.disabled=false;btn.textContent='Создать аккаунт';
     if(error){
       let m=error.message||'';
@@ -1212,6 +1266,22 @@ async function doRegister(){
       else if(m.includes('at least 6')){m='Пароль минимум 6 символов';}
       else{m='Ошибка: '+m;}
       showErr(m);return;
+    }
+    if(data.user&&_needConfirm){
+      // Сохраняем профиль и (для УК) компанию, но НЕ входим — ждём подтверждения email
+      if(_regRole==='uk_admin'){
+        const ukName=document.getElementById('rUKName').value.trim();
+        try{
+          await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone,email,role:'uk_admin'});
+          const{data:comp}=await sb.from('companies').insert({name:ukName,phone,email,admin_id:data.user.id}).select().single();
+          if(comp&&comp.id)await sb.from('profiles').upsert({id:data.user.id,company_id:comp.id});
+          if(_inviteRow)await sb.from('uk_invites').update({used:true,used_by:data.user.id,used_at:new Date().toISOString()}).eq('id',_inviteRow.id);
+        }catch(e){}
+      }else{
+        try{await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone,email,role:'resident'});await seedData(data.user.id);}catch(e){}
+      }
+      showEmailConfirmScreen(email);
+      return;
     }
     if(data.user){
       if(_regRole==='uk_admin'){
@@ -1247,6 +1317,82 @@ function selectRole(role){
 }
 
 // Проверка URL: если ?uk=1 — режим регистрации УК
+function showEmailConfirmScreen(email){
+  const box=document.querySelector('.abox');
+  if(!box)return;
+  box.innerHTML='<div style="text-align:center;padding:20px 0">'+
+    '<div style="font-size:54px;margin-bottom:16px">📬</div>'+
+    '<div style="font-size:22px;font-weight:700;margin-bottom:10px">Проверьте почту</div>'+
+    '<div style="font-size:14px;color:var(--mu);line-height:1.6;margin-bottom:24px">Мы отправили письмо на <b style="color:var(--tx)">'+email+'</b>.<br>Откройте его и перейдите по ссылке, чтобы подтвердить аккаунт и войти в ДомПлюс.</div>'+
+    '<div style="font-size:12.5px;color:var(--mu);background:var(--sf2);border-radius:10px;padding:14px 16px;line-height:1.6;text-align:left;margin-bottom:20px">💡 Не пришло письмо? Проверьте папку «Спам». Письмо приходит в течение 1–2 минут.</div>'+
+    '<button class="btn-auth" onclick="location.href=location.origin">Вернуться ко входу</button>'+
+    '</div>';
+}
+
+function showMeterHistory(meterId){
+  const m=UM.find(x=>x.id===meterId);
+  if(!m)return;
+  document.getElementById('meterHistTitle').textContent=m.icon+' '+m.name+' — история';
+  const hist=Array.isArray(m.history)?m.history:[];
+  const body=document.getElementById('meterHistBody');
+  if(hist.length<1){
+    body.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--mu)"><div style="font-size:40px;margin-bottom:10px">📊</div>Истории пока нет.<br>Передавайте показания каждый месяц — здесь появится график.</div>';
+    document.getElementById('meterHistOv').classList.add('open');
+    return;
+  }
+  // считаем расход между показаниями
+  const rows=hist.map((h,i)=>{
+    const prev=i>0?hist[i-1].value:h.value;
+    const diff=Math.max(h.value-prev,0);
+    return{period:h.period||new Date(h.date).toLocaleDateString('ru',{month:'short',year:'2-digit'}),value:h.value,diff:i>0?diff:0,date:h.date};
+  });
+  const maxDiff=Math.max(...rows.map(r=>r.diff),1);
+  // строим столбчатый график расхода
+  let chart='<div style="font-size:12px;color:var(--mu);margin-bottom:8px">Расход по периодам ('+m.unit+')</div>';
+  chart+='<div style="display:flex;align-items:flex-end;justify-content:space-around;gap:6px;height:140px;padding:10px;background:var(--sf2);border-radius:10px;margin-bottom:14px">';
+  rows.forEach(r=>{
+    const h=r.diff>0?Math.max((r.diff/maxDiff)*100,4):2;
+    chart+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end"><div style="font-size:10px;font-weight:600;color:var(--tx)">'+(r.diff>0?'+'+r.diff:'—')+'</div><div style="width:100%;max-width:38px;height:'+h+'%;background:linear-gradient(180deg,var(--ac),var(--gr));border-radius:5px 5px 0 0"></div><div style="font-size:9.5px;color:var(--mu);text-align:center">'+r.period+'</div></div>';
+  });
+  chart+='</div>';
+  // таблица показаний
+  chart+='<div style="font-size:12px;color:var(--mu);margin-bottom:6px">Все показания</div>';
+  chart+='<div style="max-height:180px;overflow-y:auto">';
+  rows.slice().reverse().forEach(r=>{
+    const d=new Date(r.date).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
+    chart+='<div style="display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bd);font-size:13px"><span>'+r.period+' · <span style="color:var(--mu)">'+d+'</span></span><span style="font-weight:600">'+Number(r.value).toLocaleString('ru')+' '+m.unit+(r.diff>0?' <span style="color:var(--gr);font-weight:400">(+'+r.diff+')</span>':'')+'</span></div>';
+  });
+  chart+='</div>';
+  body.innerHTML=chart;
+  document.getElementById('meterHistOv').classList.add('open');
+}
+
+function openLegal(type){
+  const title=document.getElementById('legalTitle');
+  const body=document.getElementById('legalBody');
+  if(type==='pdn'){
+    title.textContent='Согласие на обработку персональных данных';
+    body.innerHTML='<p style="margin-bottom:12px">Регистрируясь в сервисе ДомПлюс, я даю согласие на обработку моих персональных данных в соответствии с Федеральным законом №152-ФЗ «О персональных данных».</p>'+
+      '<p style="margin-bottom:10px"><b>1. Какие данные обрабатываются:</b><br>ФИО, адрес, телефон, email, лицевой счёт, данные о квартире, показания счётчиков, история начислений и платежей.</p>'+
+      '<p style="margin-bottom:10px"><b>2. Цели обработки:</b><br>предоставление услуг ЖКХ-сервиса: выставление и оплата квитанций, передача показаний, обработка заявок, связь с управляющей компанией.</p>'+
+      '<p style="margin-bottom:10px"><b>3. Действия с данными:</b><br>сбор, запись, хранение, использование, передача управляющей компании, обслуживающей ваш дом.</p>'+
+      '<p style="margin-bottom:10px"><b>4. Срок действия согласия:</b><br>до достижения целей обработки или до отзыва согласия.</p>'+
+      '<p style="margin-bottom:10px"><b>5. Отзыв согласия:</b><br>вы можете отозвать согласие, направив запрос на удаление аккаунта. После отзыва данные удаляются, кроме случаев, когда их хранение требуется по закону.</p>'+
+      '<p style="color:var(--mu);font-size:12px;margin-top:14px">Данное согласие является добровольным. Без согласия предоставление услуг невозможно.</p>';
+  }else{
+    title.textContent='Политика конфиденциальности';
+    body.innerHTML='<p style="margin-bottom:12px">Настоящая Политика описывает, как сервис ДомПлюс собирает, использует и защищает информацию пользователей.</p>'+
+      '<p style="margin-bottom:10px"><b>1. Сбор информации.</b><br>Мы собираем данные, которые вы предоставляете при регистрации и использовании сервиса: контактные данные, информацию о квартире, показания счётчиков, историю платежей.</p>'+
+      '<p style="margin-bottom:10px"><b>2. Использование информации.</b><br>Данные используются исключительно для предоставления услуг ЖКХ: начислений, оплат, заявок, связи с УК. Мы не продаём ваши данные третьим лицам.</p>'+
+      '<p style="margin-bottom:10px"><b>3. Передача данных.</b><br>Ваши данные передаются только управляющей компании, обслуживающей ваш дом, для выполнения её обязанностей.</p>'+
+      '<p style="margin-bottom:10px"><b>4. Защита данных.</b><br>Мы применяем технические и организационные меры для защиты данных от несанкционированного доступа: шифрование, контроль доступа, безопасное хранение.</p>'+
+      '<p style="margin-bottom:10px"><b>5. Права пользователя.</b><br>Вы вправе получить доступ к своим данным, исправить их, удалить аккаунт и отозвать согласие на обработку.</p>'+
+      '<p style="margin-bottom:10px"><b>6. Контакты.</b><br>По вопросам обработки персональных данных обращайтесь в службу поддержки ДомПлюс.</p>'+
+      '<p style="color:var(--mu);font-size:12px;margin-top:14px">Политика может обновляться. Актуальная версия всегда доступна в сервисе.</p>';
+  }
+  document.getElementById('legalOv').classList.add('open');
+}
+
 async function checkUKMode(){
   try{
     const params=new URLSearchParams(window.location.search);
@@ -1333,7 +1479,7 @@ async function initApp(user){
 async function loadAll(){
   await Promise.all([lPr(),lBills(),lPay(),lMet(),lTick(),lNot(),lCards()]);
   renderHome();renderSidebar();
-  await lNews();
+  await lNews();await lDocs();
   startPolling();
 }
 async function lPr(){
@@ -1704,7 +1850,8 @@ function renderMeters(){
       <div class="mv">${Number(m.current_value).toLocaleString('ru')} <span class="mu2">${m.unit}</span></div>
       <div class="mp">Пред.: ${Number(m.previous_value).toLocaleString('ru')} · Расход: +${diff} ${m.unit}</div>
       <div class="mb2"><div class="mbar" style="width:${pct}%;background:${bc[m.type]||'var(--ac)'}"></div></div>
-      <div class="mf"><span>Норма: ${norm} ${m.unit}/мес</span><span style="color:${ok?'var(--gr)':'var(--or)'}">${ok?'В норме':'Повышен'}</span></div></div>`;
+      <div class="mf"><span>Норма: ${norm} ${m.unit}/мес</span><span style="color:${ok?'var(--gr)':'var(--or)'}">${ok?'В норме':'Повышен'}</span></div>
+      <button class="btn bg2 bsm" style="width:100%;justify-content:center;margin-top:10px" onclick="showMeterHistory('${m.id}')">📈 История показаний</button></div>`;
   }).join('');
 }
 
@@ -1720,13 +1867,16 @@ async function submitMeters(){
   const upd=[{type:'water_cold',val:parseFloat(cold)},{type:'water_hot',val:parseFloat(hot)},{type:'electricity',val:parseFloat(elec)}].filter(u=>u.val&&!isNaN(u.val));
   for(const u of upd){
     const m=UM.find(x=>x.type===u.type);
+    const nowISO=new Date().toISOString();
     if(m){
-      // обновляем существующий счётчик
-      await sb.from('meters').update({previous_value:m.current_value,current_value:u.val,status:'accepted',period,submitted_at:new Date().toISOString()}).eq('id',m.id);
+      // обновляем существующий счётчик + добавляем в историю
+      const hist=Array.isArray(m.history)?m.history.slice():[];
+      hist.push({date:nowISO,value:u.val,period});
+      await sb.from('meters').update({previous_value:m.current_value,current_value:u.val,status:'accepted',period,submitted_at:nowISO,history:hist}).eq('id',m.id);
     }else{
       // создаём новый счётчик (житель заводит сам)
       const mt=meta[u.type];
-      await sb.from('meters').insert({user_id:CU.id,apartment_id:UA?.id,type:u.type,name:mt.name,icon:mt.icon,unit:mt.unit,current_value:u.val,previous_value:u.val,status:'accepted',period,submitted_at:new Date().toISOString()});
+      await sb.from('meters').insert({user_id:CU.id,apartment_id:UA?.id,type:u.type,name:mt.name,icon:mt.icon,unit:mt.unit,current_value:u.val,previous_value:u.val,status:'accepted',period,submitted_at:nowISO,history:[{date:nowISO,value:u.val,period}]});
     }
   }
   await sb.from('notifications').insert({user_id:CU.id,icon:'📊',bg:'var(--acd)',text:'Показания счётчиков переданы в УК',read:false});
@@ -1747,6 +1897,7 @@ function renderTickets(filterStatus){
     const d=new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'});
     return `<div class="tc" data-status="${t.status}"><div class="tt"><div><div class="tti">${t.category}</div><div class="tnum">#${t.number||t.id?.slice(0,8)}</div></div><div class="tag ${st[t.status]||'new'}">${stxt[t.status]||'Новая'}</div></div>
       <div class="tdesc">${t.description}</div>
+      ${t.photo?`<img src="${t.photo}" style="max-width:180px;border-radius:10px;margin-top:8px;cursor:pointer;border:1px solid var(--bd)" onclick="window.open(this.src)">`:''}
       <div class="tmeta"><span>📅 ${d}</span>${t.master?`<span>👷 ${t.master}</span>`:'<span>👷 Не назначен</span>'}</div></div>`;
   }).join('');
 }
@@ -1768,15 +1919,41 @@ async function notifyUK(icon,bg,text){
   }catch(e){}
 }
 
+let _ticketPhoto=null;
+
+function previewTicketPhoto(input){
+  const file=input.files&&input.files[0];
+  if(!file){_ticketPhoto=null;document.getElementById('tPhotoPreview').innerHTML='';return;}
+  if(file.size>10*1024*1024){alert('Файл слишком большой (макс. 10 МБ)');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      // Сжимаем до ширины максимум 800px для экономии места
+      const canvas=document.createElement('canvas');
+      const maxW=800;
+      const scale=Math.min(maxW/img.width,1);
+      canvas.width=img.width*scale;
+      canvas.height=img.height*scale;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      _ticketPhoto=canvas.toDataURL('image/jpeg',0.7);
+      document.getElementById('tPhotoPreview').innerHTML='<img src="'+_ticketPhoto+'" style="max-width:160px;border-radius:10px;border:1px solid var(--bd)"><div style="font-size:11px;color:var(--mu);margin-top:4px">✓ Фото прикреплено</div>';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 async function createTicket(){
   const cat=document.getElementById('tCat').value,desc=document.getElementById('tDesc').value;
   if(!desc.trim()){alert('Опишите проблему');return;}
   const num='ЗВ-'+new Date().getFullYear()+'-'+Math.floor(Math.random()*9000+1000);
-  await sb.from('tickets').insert({user_id:CU.id,apartment_id:UA?.id,company_id:UA?.company_id||null,number:num,category:cat,description:desc,status:'new'});
+  await sb.from('tickets').insert({user_id:CU.id,apartment_id:UA?.id,company_id:UA?.company_id||null,number:num,category:cat,description:desc,status:'new',photo:_ticketPhoto});
   await sb.from('notifications').insert({user_id:CU.id,icon:'📋',bg:'var(--pud)',text:'Заявка #'+num+' подана',read:false});
   await notifyUK('📋','var(--pud)','Новая заявка #'+num+' от '+(UP?.full_name||'жителя')+': '+cat);
   await lTick();await lNot();renderTickets('all');renderSidebar();renderNotifs();
-  document.getElementById('ntForm').style.display='none';document.getElementById('tDesc').value='';
+  document.getElementById('ntForm').style.display='none';document.getElementById('tDesc').value='';_ticketPhoto=null;document.getElementById('tPhotoPreview').innerHTML='';const pf=document.getElementById('tPhoto');if(pf)pf.value='';
   toast('📋','Заявка '+num+' подана успешно');
 }
 
@@ -1874,6 +2051,23 @@ function previewArc(idx){
 }
 
 // ── NEWS ──
+async function lDocs(){
+  if(!UA||!UA.company_id){UDocs=[];renderDocsList();return;}
+  const{data}=await sb.from('documents').select('*').eq('company_id',UA.company_id).order('created_at',{ascending:false});
+  UDocs=data||[];renderDocsList();
+}
+function renderDocsList(){
+  const el=document.getElementById('docsList');
+  if(!el)return;
+  if(!UDocs.length){el.innerHTML='<div style="padding:18px 22px;font-size:13px;color:var(--mu)">УК пока не добавила документы</div>';return;}
+  const ico={pdf:'📄',report:'📊',contract:'📋',other:'📎'};
+  el.innerHTML=UDocs.map(d=>(
+    '<div class="sr"><div style="display:flex;align-items:center;gap:12px"><div style="font-size:22px">'+(ico[d.type]||'📄')+'</div><div><div class="srl">'+d.name+'</div><div class="srd">Добавлен '+new Date(d.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'})+'</div></div></div>'+(d.url?'<a class="btn bp bsm" href="'+d.url+'" target="_blank" rel="noopener">Открыть</a>':'')+'</div>'
+  )).join('');
+}
+
+let UDocs=[];
+
 async function lNews(){
   if(!UA||!UA.company_id){UNews=[];renderNewsList();return;}
   const{data}=await sb.from('news').select('*').eq('company_id',UA.company_id).order('created_at',{ascending:false});
@@ -2489,7 +2683,8 @@ function renderUKTickets(filter){
         '<button class="btn bg2 bsm" onclick="ukSetTicketStatus(\''+t.id+'\',\'progress\')">Вернуть в работу</button>';
     }
     const master=t.master?'<div style="font-size:11.5px;color:var(--mu);margin-top:4px">👷 Мастер: '+t.master+'</div>':'';
-    return '<div class="tc"><div class="tt"><div><div class="tti">'+t.category+'</div><div class="tnum">#'+(t.number||'')+' · '+who+(addr?' · 🏠 '+addr:'')+'</div></div><div class="tag '+(stc[t.status]||'new')+'">'+(stx[t.status]||'Новая')+'</div></div><div class="tdesc">'+(t.description||'')+'</div>'+master+'<div class="tmeta"><span>📅 '+d+'</span></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+actions+'</div></div>';
+    const photoHtml=t.photo?'<img src="'+t.photo+'" style="max-width:200px;border-radius:10px;margin-top:10px;cursor:pointer;border:1px solid var(--bd)" onclick="window.open(this.src)">':'';
+    return '<div class="tc"><div class="tt"><div><div class="tti">'+t.category+'</div><div class="tnum">#'+(t.number||'')+' · '+who+(addr?' · 🏠 '+addr:'')+'</div></div><div class="tag '+(stc[t.status]||'new')+'">'+(stx[t.status]||'Новая')+'</div></div><div class="tdesc">'+(t.description||'')+'</div>'+photoHtml+master+'<div class="tmeta"><span>📅 '+d+'</span></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+actions+'</div></div>';
   }).join('');
 }
 
@@ -2823,6 +3018,43 @@ function renderUKMeters(){
   }).join('');
 }
 
+// ── ДОКУМЕНТЫ УК ──
+let UKDocs=[];
+async function lUKDocs(){
+  if(!UCompany)return;
+  const{data}=await sb.from('documents').select('*').eq('company_id',UCompany.id).order('created_at',{ascending:false});
+  UKDocs=data||[];renderUKDocs();
+}
+function renderUKDocs(){
+  const el=document.getElementById('ukDocsList');
+  if(!el)return;
+  if(!UKDocs.length){el.innerHTML='<div class="emp"><div class="big">📄</div><p>Документов пока нет</p></div>';return;}
+  const ico={pdf:'📄',report:'📊',contract:'📋',other:'📎'};
+  el.innerHTML=UKDocs.map(d=>(
+    '<div class="sr" style="cursor:default"><div style="display:flex;align-items:center;gap:12px"><div style="font-size:22px">'+(ico[d.type]||'📄')+'</div><div><div class="srl">'+d.name+'</div><div class="srd">'+new Date(d.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'})+'</div></div></div><div style="display:flex;gap:8px">'+(d.url?'<a class="btn bg2 bsm" href="'+d.url+'" target="_blank" rel="noopener">Открыть</a>':'')+'<button class="btn brd bsm" onclick="deleteDoc(\''+d.id+'\')">Удалить</button></div></div>'
+  )).join('');
+}
+async function addDoc(){
+  const name=document.getElementById('docName').value.trim();
+  const type=document.getElementById('docType').value;
+  const url=document.getElementById('docUrl').value.trim();
+  if(!name){alert('Введите название документа');return;}
+  if(!UCompany){alert('Компания не найдена');return;}
+  await sb.from('documents').insert({company_id:UCompany.id,name,type,url});
+  // уведомить жителей
+  for(const r of UResidents){await sb.from('notifications').insert({user_id:r.id,icon:'📄',bg:'var(--acd)',text:'Новый документ: '+name,read:false});}
+  ['docName','docUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addDocForm').style.display='none';
+  await lUKDocs();
+  toast('📄','Документ добавлен для жителей');
+}
+async function deleteDoc(id){
+  if(!confirm('Удалить документ?'))return;
+  await sb.from('documents').delete().eq('id',id);
+  await lUKDocs();
+  toast('🗑️','Документ удалён');
+}
+
 // ── НАВИГАЦИЯ УК ──
 function ukGoto(page,el){
   document.querySelectorAll('#ukPage .page').forEach(p=>p.classList.remove('active'));
@@ -2834,6 +3066,7 @@ function ukGoto(page,el){
   window.scrollTo(0,0);
   if(page==='uksettings')fillUKSettings();
   if(page==='uknews')lUKNews();
+  if(page==='ukdocs')lUKDocs();
   if(page==='meters')renderUKMeters();
   if(page==='ukchat')lUKChat();
   if(page==='billing')fillBillPeriods();
@@ -2858,6 +3091,7 @@ function goto(page,el){
   if(page==='tickets')renderTickets('all');
   if(page==='docs')renderArchive();
   if(page==='news')lNews();
+  if(page==='docs')lDocs();
   if(page==='chat'){switchChat('uk',document.querySelector('.cth'));}
   if(page==='settings'){updateCities();renderCards();const se=document.getElementById('secEmail');if(se)se.textContent=CU?.email||'—';}
   closeSidebar();
